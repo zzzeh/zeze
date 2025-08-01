@@ -1,0 +1,2201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>薯薯的字体仓库</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: white;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            display: flex;
+            overflow: hidden;
+        }
+        .left-panel {
+            width: 400px;
+            background: #f8f9ff;
+            padding: 40px 30px;
+            border-right: 1.5px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+            overflow-y: auto;
+            min-width: 400px;
+            max-width: 400px;
+        }
+        .right-panel {
+            flex: 1;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: stretch;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            border-radius: 20px 20px 0 0;
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .upload-area {
+            border: 2.5px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px 10px;
+            text-align: center;
+            background: #fff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+        .upload-icon {
+            font-size: 2.2rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .upload-text {
+            font-size: 1.1rem;
+            color: #333;
+            margin-bottom: 6px;
+        }
+        .upload-subtext {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        #fileInput { display: none; }
+        .progress-container {
+            margin-top: 18px;
+            display: none;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .error-message, .success-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0 0 0;
+            display: none;
+            font-size: 0.98rem;
+        }
+        .error-message { background: #ff6b6b; color: white; }
+        .success-message { background: #51cf66; color: white; }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .input-label {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        .preview-input {
+            padding: 10px 12px;
+            border: 1.5px solid #bdbdbd;
+            border-radius: 7px;
+            font-size: 1.05rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+        .preview-input:focus {
+            border-color: #667eea;
+        }
+        .font-select {
+            padding: 10px 32px 10px 12px;
+            border: 1.5px solid #bdbdbd;
+            border-radius: 7px;
+            font-size: 1.05rem;
+            outline: none;
+            background: #fff;
+            color: #333;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M4 6L8 10L12 6' stroke='%23bdbdbd' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 22px center;
+            background-size: 19px 19px;
+        }
+        .font-list {
+            margin-top: 10px;
+            font-size: 0.95rem;
+            color: #666;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .font-list-item {
+            margin-bottom: 4px;
+        }
+        /* 预览区每字方框样式 */
+        .preview-outer {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-box {
+            width: 100%;
+            height: 100%;
+            background: #f8f9ff;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+            display: block;
+            margin: auto;
+        }
+        .preview-char {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 8px;
+            margin: 0;
+            background: transparent;
+            /* pointer-events: none;  // 移除，保证子元素可交互 */
+            transition: border 0.2s, box-shadow 0.2s;
+            user-select: none;
+            position: absolute;
+            z-index: 1;
+            /* 字体大小由行内style控制 */
+        }
+        .preview-char.selected {
+            /* 用outline和box-shadow模拟选中效果，避免border导致位移 */
+            outline: 2.5px solid #667eea;
+            outline-offset: 1.5px;
+            box-shadow: 0 0 0 2px #667eea33;
+            z-index: 10;
+        }
+        .preview-char:active {
+            background: #f0f2ff;
+        }
+        .char-inner {
+            pointer-events: auto !important;
+            cursor: pointer;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        .font-info-table {
+            width: 100%;
+            max-width: 600px;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .font-info-table th, .font-info-table td {
+            border: 1px solid #e0e0e0;
+            padding: 8px 10px;
+            font-size: 0.98rem;
+            text-align: left;
+        }
+        .font-info-table th {
+            background: #f0f2ff;
+            color: #667eea;
+        }
+        /* 单字样式选择区 */
+        .char-style-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 8px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px #0001;
+            padding: 16px 12px;
+        }
+        .char-style-controls.inactive {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .char-style-label {
+            font-size: 0.98rem;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        .color-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        .char-color-code {
+            padding: 8px 10px 8px 56px;
+            border: 1.5px solid #bdbdbd;
+            border-radius: 7px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border 0.2s;
+            width: 100%;
+            min-height: 48px;
+            position: relative;
+        }
+        .color-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        .color-prefix {
+            position: absolute;
+            left: 48px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 10;
+            pointer-events: none;
+            user-select: none;
+            width: 8px;
+        }
+        .char-color-code:focus {
+            border-color: #667eea;
+        }
+        .custom-color-picker {
+            position: absolute;
+            left: 8px;
+            top: 8px;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            z-index: 1;
+        }
+        .color-display {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #333333;
+            cursor: pointer;
+            transition: border 0.2s;
+        }
+        .color-display:hover {
+            border-color: #667eea;
+        }
+        .char-color-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: none;
+            cursor: pointer;
+            opacity: 0;
+        }
+        .preset-colors {
+            display: flex;
+            gap: 8px;
+            margin-left: 8px;
+        }
+        .preset-color {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: border 0.2s;
+        }
+        .preset-color:hover {
+            border-color: #667eea;
+        }
+        .preset-color.active {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px #667eea33;
+        }
+        .position-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .position-input {
+            width: 60px;
+            padding: 6px 8px;
+            border: 1.5px solid #bdbdbd;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            outline: none;
+            text-align: center;
+        }
+        .position-input:focus {
+            border-color: #667eea;
+        }
+        @media (max-width: 900px) {
+            .container { flex-direction: column; }
+            .left-panel, .right-panel { width: 100%; min-width: 0; padding: 20px; }
+            .right-panel { padding-top: 30px; }
+        }
+        @media (max-width: 600px) {
+            .header { padding: 20px; }
+            .preview-box { font-size: 1.2rem; padding: 20px 5px; }
+        }
+        .long-slider {
+            flex: 1 1 auto;
+            min-width: 0;
+            width: 85%;
+            margin: 0 8px;
+        }
+        /* 美化滑块，确保thumb能到达两端 */
+        input[type=range].long-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            outline: none;
+            margin: 0;
+            padding: 0;
+        }
+        input[type=range].long-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1976d2;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 2px #aaa;
+            border: 2px solid #fff;
+        }
+        input[type=range].long-slider:focus::-webkit-slider-thumb {
+            box-shadow: 0 0 0 3px #1976d233;
+        }
+        input[type=range].long-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1976d2;
+            cursor: pointer;
+            border: 2px solid #fff;
+        }
+        input[type=range].long-slider::-ms-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1976d2;
+            cursor: pointer;
+            border: 2px solid #fff;
+        }
+        input[type=range].long-slider::-ms-fill-lower,
+        input[type=range].long-slider::-ms-fill-upper {
+            background: #e0e0e0;
+        }
+        input[type=range].long-slider:focus {
+            outline: none;
+        }
+        input[type=range].long-slider::-webkit-slider-runnable-track {
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+        }
+        input[type=range].long-slider::-moz-range-track {
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+        }
+        input[type=range].long-slider::-ms-fill-lower {
+            background: #e0e0e0;
+        }
+        input[type=range].long-slider::-ms-fill-upper {
+            background: #e0e0e0;
+        }
+        input[type=range].long-slider:focus::-ms-fill-lower {
+            background: #e0e0e0;
+        }
+        input[type=range].long-slider:focus::-ms-fill-upper {
+            background: #e0e0e0;
+        }
+        input[type=range].long-slider::-ms-tooltip {
+            display: none;
+        }
+        /* 左侧字符按钮样式 */
+        #charSelector .char-btn {
+            border: 1.5px solid #bdbdbd;
+            background: #fff;
+            color: #333;
+            border-radius: 7px;
+            padding: 4.8px 12px;
+            font-size: 1.32em;
+            cursor: pointer;
+            transition: border 0.2s, background 0.2s;
+        }
+        #charSelector .char-btn.selected {
+            border: 1.5px solid #667eea;
+            background: #f0f2ff;
+            color: #667eea;
+        }
+        /* 框选矩形样式 */
+        .selection-rect {
+            position: absolute;
+            border: 2px dashed #1976d2;
+            background: rgba(25,118,210,0.08);
+            pointer-events: none;
+            z-index: 9999;
+        }
+        .group-scale-bar {
+            position: absolute;
+            left: 50%;
+            top: 10px;
+            transform: translateX(-50%);
+            z-index: 2000;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px #0001;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .group-scale-bar input[type=range] {
+            width: 120px;
+        }
+
+        .resize-handle {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #fff;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px #0002;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto !important;
+        }
+        .resize-handle:hover {
+            background: #e0e7ff;
+        }
+        .resize-handle.nw { left: -7px; top: -7px; cursor: nwse-resize; }
+        .resize-handle.ne { right: -7px; top: -7px; cursor: nesw-resize; }
+        .resize-handle.sw { left: -7px; bottom: -7px; cursor: nesw-resize; }
+        .resize-handle.se { right: -7px; bottom: -7px; cursor: nwse-resize; }
+        .group-bbox {
+            position: absolute;
+            border: 2px dashed #1976d2;
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+        .group-bbox .resize-handle {
+            pointer-events: auto !important;
+            background: #fff;
+            border: 2px solid #1976d2;
+            z-index: 1001;
+        }
+        .center-panel {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f8f9ff;
+            border-left: 1px solid #e0e0e0;
+            border-right: 1px solid #e0e0e0;
+        }
+        .right-panel {
+            width: 340px;
+            min-width: 340px;
+            max-width: 340px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 40px 30px;
+            box-sizing: border-box;
+        }
+        .current-fonts {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px #0001;
+            padding: 10px 12px;
+            margin-top: 18px;
+            font-size: 0.98em;
+        }
+        .current-fonts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .current-font-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 6px;
+        }
+        .current-font-sample {
+            font-size: 1.2em;
+            min-width: 80px;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .current-font-meta {
+            color: #888;
+            font-size: 0.93em;
+        }
+        .current-font-download {
+            margin-left: auto;
+            background: #667eea;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 4px 12px;
+            cursor: pointer;
+            font-size: 0.97em;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+        .current-font-download:hover {
+            background: #4b5fd2;
+        }
+        .font-meta-vertical {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+            margin-top: 4px;
+            margin-bottom: 4px;
+        }
+        .font-meta-vertical .font-name {
+            font-size: 1.08em;
+            font-weight: 600;
+            color: #222;
+        }
+        .font-meta-vertical .font-format-size {
+            font-size: 0.98em;
+            color: #888;
+        }
+        .font-meta-vertical .font-original-name {
+            font-size: 0.93em;
+            color: #aaa;
+            margin-top: 12px;
+        }
+        /* 颜色输入和色块一行 */
+        .color-row {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">拖拽字体文件到此处</div>
+                <div class="upload-subtext">或点击选择（支持 OTF, TTF）</div>
+                <input type="file" id="fileInput" multiple accept=".otf,.ttf">
+            </div>
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">处理中...</div>
+            </div>
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+            <div style="font-size:1.05em;font-weight:400;margin-bottom:-16px;color:#333;">当前字体<span id="syncStatus" style="font-size:0.9em;color:#666;margin-left:8px;"></span></div>
+            <div class="current-fonts" id="currentFonts" style="margin-top:0;">
+                <!-- 字体列表由JS动态填充 -->
+            </div>
+            <div class="input-group">
+                <label class="input-label" for="previewInput">预览文字</label>
+                <input type="text" id="previewInput" class="preview-input" value="Love" maxlength="100">
+            </div>
+            <div class="input-group" id="charSelectorGroup">
+                <label class="input-label">选中文字</label>
+                <div id="charSelector" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                <div class="char-style-controls inactive" id="charStyleControls">
+                    <div class="input-group">
+                        <label class="input-label" for="charFontSelect">字体</label>
+                        <select id="charFontSelect" class="font-select"></select>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label" for="charColorInput">颜色</label>
+                        <div class="color-row">
+                            <div class="color-input-container">
+                                <div class="custom-color-picker" id="customColorPicker">
+                                    <div class="color-display" id="colorDisplay"></div>
+                                    <input type="color" id="charColorInput" class="char-color-input" value="#333333">
+                                </div>
+                                <div class="color-input-wrapper">
+                                    <span class="color-prefix">#</span>
+                                    <input type="text" id="charColorCode" class="char-color-code" placeholder="333333" value="333333">
+                                </div>
+                            </div>
+                            <div class="preset-colors">
+                                <div class="preset-color" style="background: #189b66;" data-color="#189b66"></div>
+                                <div class="preset-color" style="background: #b98672;" data-color="#b98672"></div>
+                                <div class="preset-color" style="background: #f6e370;" data-color="#f6e370"></div>
+                                <div class="preset-color" style="background: #6098ec;" data-color="#6098ec"></div>
+                                <div class="preset-color" style="background: #ff004d;" data-color="#ff004d"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group" style="display:none">
+                        <label class="input-label">位置调整</label>
+                        <div class="position-controls" style="width:100%;">
+                            <span>X:</span>
+                            <input type="range" id="charPosX" class="position-input long-slider" min="0" max="100" value="50">
+                            <span id="charPosXVal">50%</span>
+                        </div>
+                        <div class="position-controls" style="width:100%;">
+                            <span>Y:</span>
+                            <input type="range" id="charPosY" class="position-input long-slider" min="0" max="100" value="50">
+                            <span id="charPosYVal">50%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="center-panel">
+            <div class="preview-outer">
+                <div class="preview-box" id="previewBox"></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/+esm';
+
+        const SUPABASE_URL = 'https://ujhfluevvppgkyuazqjn.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqaGZsdWV2dnBwZ2t5dWF6cWpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5NDM1NTcsImV4cCI6MjA2NzUxOTU1N30.WzoQGNtyv9frNgEx-S7yjV_5C66gWMFeWRH5GNbfLM4';
+
+        // 创建全局Supabase客户端
+        window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase客户端已初始化:', window.supabase);
+
+        // 上传字体函数
+        window.uploadFonts = async function (files) {
+            const log = document.getElementById('log');
+            if (log) log.innerHTML = '';
+
+            for (const file of files) {
+                // 生成日期时间戳：年份后两位+月日
+                const now = new Date();
+                const year = now.getFullYear().toString().slice(-2); // 年份后两位
+                const month = String(now.getMonth() + 1).padStart(2, '0'); // 月份，补零
+                const day = String(now.getDate()).padStart(2, '0'); // 日期，补零
+                const datePrefix = `${year}${month}${day}`; // 如：250728
+                
+                const filename = `${datePrefix}_${file.name}`;
+                if (log) log.innerHTML += `📤 上传中：${filename}...<br/>`;
+
+                const { data, error } = await supabase.storage
+                    .from('82fonts')
+                    .upload(filename, file);
+
+                if (error) {
+                    if (log) log.innerHTML += `❌ 上传失败：${error.message}<br/><br/>`;
+                    console.error('Upload failed:', error);
+                } else {
+                    const url = `${SUPABASE_URL}/storage/v1/object/public/82fonts/${filename}`;
+                    if (log) log.innerHTML += `✅ 上传成功：<a href="${url}" target="_blank">${url}</a><br/><br/>`;
+                    console.log('Upload succeeded:', url);
+                }
+            }
+        };
+        
+        // 全局测试函数
+        window.testSupabase = async function() {
+            console.log('测试Supabase连接...');
+            console.log('window.supabase:', window.supabase);
+            if (window.supabase) {
+                try {
+                    const { data, error } = await window.supabase.storage.from('82fonts').list('');
+                    console.log('Supabase存储桶内容:', { data, error });
+                    return { data, error };
+                } catch (e) {
+                    console.error('测试失败:', e);
+                    return { error: e };
+                }
+            } else {
+                console.error('Supabase客户端未初始化');
+                return { error: 'Supabase客户端未初始化' };
+            }
+        };
+    </script>
+    <script>
+        // ==================== 工具函数 ====================
+        // 深拷贝工具
+        function deepCopy(obj) {
+            return JSON.parse(JSON.stringify(obj));
+        }
+        class FontUploader {
+            constructor() {
+                this.uploadArea = document.getElementById('uploadArea');
+                this.fileInput = document.getElementById('fileInput');
+                this.progressContainer = document.getElementById('progressContainer');
+                this.progressFill = document.getElementById('progressFill');
+                this.progressText = document.getElementById('progressText');
+                this.errorMessage = document.getElementById('errorMessage');
+                this.successMessage = document.getElementById('successMessage');
+                this.fontList = document.getElementById('fontList');
+                this.previewInput = document.getElementById('previewInput');
+                this.previewBox = document.getElementById('previewBox');
+                this.charStyleControls = document.getElementById('charStyleControls');
+                this.charFontSelect = document.getElementById('charFontSelect');
+                this.charColorInput = document.getElementById('charColorInput');
+                this.charColorCode = document.getElementById('charColorCode');
+                this.charPosX = document.getElementById('charPosX');
+                this.charPosY = document.getElementById('charPosY');
+                this.charPosXVal = document.getElementById('charPosXVal');
+                this.charPosYVal = document.getElementById('charPosYVal');
+                this.charSelector = document.getElementById('charSelector');
+                this.charSelectorGroup = document.getElementById('charSelectorGroup');
+                this.uploadedFonts = [];
+                this.currentFont = '';
+                this.charStyles = [];
+                this.selectedCharIndices = [];
+                this.draggingCharIndex = null;
+                this.dragOffset = { x: 0, y: 0 };
+                this.dragStartCenters = null;
+                this.dragStartMouse = null;
+                this.fontObjects = {};
+                this.undoStack = [];
+                this.groupScale = 1;
+                this.selectionRect = null;
+                this.isBoxSelecting = false;
+                this.boxSelectStart = null;
+                this.boxSelectEnd = null;
+                this.initializeEventListeners();
+                this.updatePreviewBox();
+                this.updateCharFontSelect();
+                // 缩放手柄拖动状态
+                this._resizeTarget = null;
+                this._resizeStart = null;
+                // 方向键移动
+                document.addEventListener('keydown', (e) => {
+                    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+                    if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) return;
+                    let dx = 0, dy = 0;
+                    if (e.key === 'ArrowLeft') dx = -1;
+                    if (e.key === 'ArrowRight') dx = 1;
+                    if (e.key === 'ArrowUp') dy = -1;
+                    if (e.key === 'ArrowDown') dy = 1;
+                    if (dx !== 0 || dy !== 0) {
+                        e.preventDefault();
+                        this.pushUndo();
+                        // 计算单位px
+                        const movePx = e.shiftKey ? 5 : 1;
+                        const boxRect = this.previewBox.getBoundingClientRect();
+                        for (const idx of this.selectedCharIndices) {
+                            const style = this.charStyles[idx];
+                            const fontSize = style.size || 90;
+                            let fontObj = this.fontObjects[style.font];
+                            let bbox = null, scale = 1;
+                            if (fontObj) {
+                                const text = this.previewInput.value || '';
+                                const glyph = fontObj.charToGlyph(text[idx]);
+                                if (glyph) {
+                                    bbox = glyph.getBoundingBox();
+                                    scale = fontSize / fontObj.unitsPerEm;
+                                }
+                            }
+                            let width = fontSize, height = fontSize;
+                            if (bbox && (bbox.x2 - bbox.x1) > 0 && (bbox.y2 - bbox.y1) > 0) {
+                                width = (bbox.x2 - bbox.x1) * scale;
+                                height = (bbox.y2 - bbox.y1) * scale;
+                            }
+                            const px2percentX = (1 / (boxRect.width - width)) * 100;
+                            const px2percentY = (1 / (boxRect.height - height)) * 100;
+                            style.x = Math.max(0, Math.min(100, (style.x || 0) + dx * px2percentX * movePx));
+                            style.y = Math.max(0, Math.min(100, (style.y || 0) + dy * px2percentY * movePx));
+                        }
+                        this.updatePreviewBox();
+                    }
+                });
+                this.currentFonts = document.getElementById('currentFonts');
+                this.renderCurrentFonts();
+                // 记录当前全局应用字体名
+                this.globalFont = '';
+                // 初始化颜色显示
+                this.updateColorDisplay();
+                // 显式调用加载Supabase中已有的字体
+                this.loadExistingFonts();
+            }
+            initializeEventListeners() {
+                this.uploadArea.addEventListener('click', () => {
+                    this.fileInput.click();
+                });
+                this.fileInput.addEventListener('change', (e) => {
+                    this.handleFiles(e.target.files);
+                });
+                this.uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    this.uploadArea.classList.add('dragover');
+                });
+                this.uploadArea.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    this.uploadArea.classList.remove('dragover');
+                });
+                this.uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    this.uploadArea.classList.remove('dragover');
+                    this.handleFiles(e.dataTransfer.files);
+                });
+                this.previewInput.addEventListener('input', () => {
+                    this.syncCharStylesWithText();
+                    this.updatePreviewBox();
+                });
+                this.charFontSelect.addEventListener('change', () => {
+                    this.applyCharStyle();
+                });
+                this.charColorInput.addEventListener('input', () => {
+                    this.charColorCode.value = this.charColorInput.value.substring(1);
+                    this.updateColorDisplay();
+                    this.applyColorOnly();
+                });
+                this.charColorCode.addEventListener('input', () => {
+                    this.charColorInput.value = '#' + this.charColorCode.value;
+                    this.updateColorDisplay();
+                    this.applyColorOnly();
+                });
+                this.charPosX.addEventListener('input', () => {
+                    this.charPosXVal.textContent = Math.round(this.charPosX.value) + '%';
+                    this.applyCharStyle();
+                });
+                this.charPosY.addEventListener('input', () => {
+                    this.charPosYVal.textContent = Math.round(this.charPosY.value) + '%';
+                    this.applyCharStyle();
+                });
+                // 预设颜色点击事件 - 使用事件委托
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('preset-color')) {
+                        const color = e.target.getAttribute('data-color');
+                        this.charColorInput.value = color;
+                        this.charColorCode.value = color.substring(1);
+                        this.updateColorDisplay();
+                        this.applyColorOnly();
+                        // 更新预设颜色选中状态
+                        document.querySelectorAll('.preset-color').forEach(btn => btn.classList.remove('active'));
+                        e.target.classList.add('active');
+                    }
+                });
+                // 拖动事件
+                this.previewBox.addEventListener('mousedown', (e) => {
+                    // 只允许char-inner触发选中/拖动，其他情况全部视为空白
+                    if (e.target === this.previewBox || !e.target.classList.contains('char-inner')) {
+                        // 点击空白处，取消所有选中
+                        this.selectedCharIndices = [];
+                        this.updateCharStyleControlsState();
+                        this.updatePreviewBox();
+                        this.showCharStyleControls();
+                        return;
+                    }
+                    // 命中字体本身（char-inner）
+                    const hitIndex = parseInt(e.target.getAttribute('data-index'));
+                    // 记录拖动起点
+                    this._dragCandidate = {
+                        index: hitIndex,
+                        startX: e.clientX,
+                        startY: e.clientY,
+                        mouseDown: true
+                    };
+                });
+                document.addEventListener('mousemove', (e) => {
+                    if (this._dragCandidate && this._dragCandidate.mouseDown) {
+                        const dx = e.clientX - this._dragCandidate.startX;
+                        const dy = e.clientY - this._dragCandidate.startY;
+                        if (!this._dragCandidate.dragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+                            // 开始拖动
+                            this._dragCandidate.dragging = true;
+                            this._startDragChars(this._dragCandidate.index, this._dragCandidate.startX, this._dragCandidate.startY);
+                        }
+                        if (this._dragCandidate.dragging) {
+                            this._doDragChars(e.clientX, e.clientY);
+                        }
+                    }
+                });
+                document.addEventListener('mouseup', (e) => {
+                    if (this._dragCandidate) {
+                        if (this._dragCandidate.dragging) {
+                            // 拖动结束
+                            this._endDragChars();
+                        } else {
+                            // 只是点击，做toggle选中
+                            this._toggleCharSelect(this._dragCandidate.index);
+                        }
+                        this._dragCandidate = null;
+                    }
+                });
+                // 左侧字符选择器事件
+                this.charSelector.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('char-btn')) {
+                        const idx = parseInt(e.target.getAttribute('data-index'));
+                        this._toggleCharSelect(idx);
+                    }
+                });
+                // 撤销快捷键
+                document.addEventListener('keydown', (e) => {
+                    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+                        e.preventDefault();
+                        this.undo();
+                    }
+                });
+                // 预览区框选
+                this.previewBox.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return;
+                    if (e.target === this.previewBox) {
+                        this.isBoxSelecting = true;
+                        const rect = this.previewBox.getBoundingClientRect();
+                        this.boxSelectStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+                        this.boxSelectEnd = { ...this.boxSelectStart };
+                        this.showSelectionRect();
+                    }
+                });
+                document.addEventListener('mousemove', (e) => {
+                    if (this.isBoxSelecting) {
+                        const rect = this.previewBox.getBoundingClientRect();
+                        this.boxSelectEnd = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+                        this.showSelectionRect();
+                    }
+                });
+                document.addEventListener('mouseup', (e) => {
+                    if (this.isBoxSelecting) {
+                        this.isBoxSelecting = false;
+                        this.hideSelectionRect();
+                        this.handleBoxSelect();
+                    }
+                });
+            }
+            handleFiles(files) {
+                if (files.length === 0) return;
+                this.hideMessages();
+                const validFiles = Array.from(files).filter(file => {
+                    const isValid = file.type === 'font/otf' || file.type === 'font/ttf' || file.name.toLowerCase().endsWith('.otf') || file.name.toLowerCase().endsWith('.ttf');
+                    if (!isValid) {
+                        this.showError(`不支持的格式: ${file.name}，仅支持 OTF 和 TTF`);
+                    }
+                    return isValid;
+                });
+                if (validFiles.length === 0) {
+                    return;
+                }
+                this.processFonts(validFiles);
+                this.renderCurrentFonts();
+            }
+            async processFonts(files) {
+                const totalFiles = files.length;
+                let processedFiles = 0;
+                for (const file of files) {
+                    try {
+                        await this.processFont(file);
+                        processedFiles++;
+                    } catch (error) {
+                        this.showError(`处理失败 ${file.name}: ${error.message}`);
+                    }
+                }
+                this.showSuccess(`${processedFiles} 个字体上传成功!`);
+                this.updateCharFontSelect();
+                this.updatePreviewBox();
+                this.renderCurrentFonts();
+            }
+            async processFont(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        try {
+                            const fontName = this.extractFontName(file.name);
+                            const fontUrl = e.target.result;
+                            this.registerFont(fontName, fontUrl, file.type);
+                            this.uploadedFonts.push({
+                                name: fontName,
+                                url: fontUrl,
+                                format: this.getFontFormat(file),
+                                originalName: file.name,
+                                size: this.formatFileSize(file.size)
+                            });
+                            // 解析字体文件为 opentype.Font
+                            try {
+                                const fontBuffer = await fetch(fontUrl).then(r => r.arrayBuffer());
+                                opentype.load(fontBuffer, (err, font) => {
+                                    if (!err && font) {
+                                        this.fontObjects[fontName] = font;
+                                    }
+                                });
+                            } catch (e) {}
+                            resolve();
+                            this.renderCurrentFonts();
+                        } catch (error) {
+                            reject(error);
+                        }
+                    };
+                    reader.onerror = () => reject(new Error('读取文件失败'));
+                    reader.readAsDataURL(file);
+                });
+            }
+            extractFontName(filename) {
+                const name = filename.replace(/\.(otf|ttf)$/i, '');
+                return name.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            }
+            getFontFormat(file) {
+                if (file.name.toLowerCase().endsWith('.otf')) return 'OTF';
+                if (file.name.toLowerCase().endsWith('.ttf')) return 'TTF';
+                return '未知';
+            }
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            registerFont(fontName, fontUrl, format) {
+                console.log(`注册字体到CSS: ${fontName}, URL: ${fontUrl}, 格式: ${format}`);
+                
+                // 创建@font-face规则
+                const fontFace = document.createElement('style');
+                const formatType = format === 'font/otf' ? 'opentype' : 'truetype';
+                fontFace.textContent = `
+                    @font-face {
+                        font-family: '${fontName}';
+                        src: url('${fontUrl}') format('${formatType}');
+                        font-display: swap;
+                    }
+                `;
+                document.head.appendChild(fontFace);
+                console.log(`已添加@font-face规则: ${fontName}`);
+            }
+            updateCharFontSelect() {
+                // 只显示从Supabase上传的字体
+                const uploadedFonts = this.uploadedFonts.map(f => ({ name: f.name, isPreset: false }));
+                
+                if (uploadedFonts.length === 0) {
+                    this.charFontSelect.innerHTML = '<option value="">请先上传字体到Supabase</option>';
+                    this.charFontSelect.disabled = true;
+                } else {
+                    this.charFontSelect.innerHTML = uploadedFonts.map((font, idx) =>
+                        `<option value="${font.name}">${font.name}</option>`
+                    ).join('');
+                    this.charFontSelect.disabled = false;
+                }
+            }
+            syncCharStylesWithText() {
+                // 保证charStyles数组长度与文本一致
+                const text = this.previewInput.value || '';
+                if (this.charStyles.length > text.length) {
+                    this.charStyles = this.charStyles.slice(0, text.length);
+                } else {
+                    // 获取预览区宽高
+                    const boxRect = this.previewBox ? this.previewBox.getBoundingClientRect() : {width: 1, height: 1};
+                    const n = text.length;
+                    // 计算每个字的宽度（用fontSize或默认90）
+                    let widths = [];
+                    for (let i = 0; i < n; i++) {
+                        const style = this.charStyles[i] || { size: 90 };
+                        const fontSize = style.size || 90;
+                        let fontObj = this.fontObjects[style.font];
+                        let bbox = null, scale = 1;
+                        if (fontObj) {
+                            const glyph = fontObj.charToGlyph(text[i]);
+                            if (glyph) {
+                                bbox = glyph.getBoundingBox();
+                                scale = fontSize / fontObj.unitsPerEm;
+                            }
+                        }
+                        let width = fontSize;
+                        if (bbox && (bbox.x2 - bbox.x1) > 0) {
+                            width = (bbox.x2 - bbox.x1) * scale;
+                        }
+                        widths.push(width);
+                    }
+                    
+                    // 计算总宽度
+                    const totalWidth = widths.reduce((a, b) => a + b, 0);
+                    
+                    // 判断是否是初始加载（所有字符都没有样式）
+                    const isInitialLoad = this.charStyles.length === 0;
+                    
+                    for (let i = this.charStyles.length; i < n; i++) {
+                        let xPx, percentX;
+                        
+                        if (isInitialLoad) {
+                            // 初始加载时，所有文字居中显示
+                            let startX = (boxRect.width - totalWidth) / 2;
+                            let accWidth = 0;
+                            for (let j = 0; j < i; j++) {
+                                accWidth += widths[j];
+                            }
+                            xPx = startX + accWidth;
+                            percentX = (xPx / (boxRect.width - widths[i])) * 100;
+                        } else {
+                            // 用户输入新文字时，从左上角开始，依次往右排列
+                            // 检查这是否是新输入的文字
+                            if (i >= this.charStyles.length) {
+                                // 这是新输入的文字，从左上角开始，依次往右排列
+                                let accWidth = 0;
+                                // 累加所有前面字符的宽度（包括现有文字和新输入文字）
+                                for (let j = 0; j < i; j++) {
+                                    accWidth += widths[j];
+                                }
+                                xPx = accWidth;
+                                percentX = (xPx / (boxRect.width - widths[i])) * 100;
+                            } else {
+                                // 这是现有文字，保持原有位置，不重新计算
+                                continue;
+                            }
+                        }
+                        
+                        // 优先使用Supabase上传的字体，如果没有则使用空字符串
+                        const defaultFont = this.uploadedFonts.length > 0 ? this.uploadedFonts[0].name : '';
+                        this.charStyles.push({ 
+                            font: this.globalFont || '', 
+                            color: '#333333',
+                            x: percentX,
+                            y: isInitialLoad ? 42 : 0, // 初始加载时垂直居中，新输入时从顶部开始
+                            size: 90
+                        });
+                    }
+                }
+                if (this.selectedCharIndices && this.selectedCharIndices.length > text.length) {
+                    this.selectedCharIndices = this.selectedCharIndices.slice(0, text.length);
+                }
+                // 同步左侧字符选择器
+                this.updateCharSelector();
+            }
+            updatePreviewBox() {
+                let text = this.previewInput.value;
+                if (typeof text !== 'string' || text.length === 0) text = ' ';
+                this.syncCharStylesWithText();
+                this.previewBox.innerHTML = '';
+                // 动态获取预览区尺寸
+                const boxRect = this.previewBox.getBoundingClientRect();
+                const boxW = boxRect.width;
+                const boxH = boxRect.height;
+                // 滑块范围固定为0~100
+                if (this.selectedCharIndices && this.selectedCharIndices.length === 1) {
+                    this.charPosX.min = 0;
+                    this.charPosX.max = 100;
+                    this.charPosY.min = 0;
+                    this.charPosY.max = 100;
+                    const idx = this.selectedCharIndices[0];
+                    const style = this.charStyles[idx] || { size: 90 };
+                    // 只在显示时限制范围，不修改原始数据
+                    const displayX = Math.max(0, Math.min(100, style.x || 0));
+                    const displayY = Math.max(0, Math.min(100, style.y || 0));
+                    this.charPosX.value = Math.round(displayX);
+                    this.charPosY.value = Math.round(displayY);
+                    this.charPosXVal.textContent = Math.round(displayX) + '%';
+                    this.charPosYVal.textContent = Math.round(displayY) + '%';
+                }
+                for (let i = 0; i < text.length; i++) {
+                    const char = text[i] === ' ' ? '\u00A0' : text[i];
+                    const style = this.charStyles[i] || { font: '', color: '#333333', x: 50, y: 50, size: 90 };
+                    const fontSize = style.size || 90;
+                    let fontObj = this.fontObjects[style.font];
+                    let bbox = null, scale = 1;
+                    if (fontObj) {
+                        const glyph = fontObj.charToGlyph(text[i]);
+                        if (glyph) {
+                            bbox = glyph.getBoundingBox();
+                            scale = fontSize / fontObj.unitsPerEm;
+                        }
+                    }
+                    let width = fontSize, height = fontSize;
+                    if (bbox && (bbox.x2 - bbox.x1) > 0 && (bbox.y2 - bbox.y1) > 0) {
+                        width = (bbox.x2 - bbox.x1) * scale;
+                        height = (bbox.y2 - bbox.y1) * scale;
+                    }
+                    // 滑块0~100严格对应left=0~boxW-width
+                    let percentX = style.x !== undefined ? style.x : 50;
+                    let percentY = style.y !== undefined ? style.y : 50;
+                    if (percentX < 0) percentX = 0;
+                    if (percentX > 100) percentX = 100;
+                    if (percentY < 0) percentY = 0;
+                    if (percentY > 100) percentY = 100;
+                    const left = percentX / 100 * (boxW - width);
+                    const top = percentY / 100 * (boxH - height);
+                    const span = document.createElement('span');
+                    // 多选时不显示单字选中方框
+                    span.className = 'preview-char' + (this.selectedCharIndices && this.selectedCharIndices.includes(i) ? ' selected' : '');
+                    span.style.left = left + 'px';
+                    span.style.top = top + 'px';
+                    span.style.width = width + 'px';
+                    span.style.height = height + 'px';
+                    span.style.fontSize = fontSize + 'px';
+                    span.setAttribute('data-index', i);
+                    span.style.fontFamily = style.font ? `'${style.font}', sans-serif` : '';
+                    // 内部包裹实际文字，只有文字可点
+                    const inner = document.createElement('span');
+                    inner.className = 'char-inner';
+                    inner.textContent = text[i];
+                    inner.style.color = style.color || '#333333';
+                    inner.setAttribute('data-index', i);
+                    inner.style.position = 'absolute';
+                    inner.style.left = '0px';
+                    inner.style.top = '0px';
+                    inner.style.width = width + 'px';
+                    inner.style.height = height + 'px';
+                    span.appendChild(inner);
+                    // 选中时显示四角缩放手柄
+                    if (this.selectedCharIndices && this.selectedCharIndices.length === 1 && this.selectedCharIndices[0] === i) {
+                        const corners = [
+                            { cls: 'nw', x: 0, y: 0 },
+                            { cls: 'ne', x: width, y: 0 },
+                            { cls: 'sw', x: 0, y: height },
+                            { cls: 'se', x: width, y: height }
+                        ];
+                        for (const corner of corners) {
+                            const handle = document.createElement('div');
+                            handle.className = 'resize-handle ' + corner.cls;
+                            handle.setAttribute('data-index', i);
+                            handle.addEventListener('mousedown', (e) => {
+                                e.stopPropagation();
+                                // 记录初始对角线长度和fontSize
+                                const rect = span.getBoundingClientRect();
+                                let startX = 0, startY = 0;
+                                if (corner.cls === 'nw') { startX = rect.right; startY = rect.bottom; }
+                                if (corner.cls === 'ne') { startX = rect.left; startY = rect.bottom; }
+                                if (corner.cls === 'sw') { startX = rect.right; startY = rect.top; }
+                                if (corner.cls === 'se') { startX = rect.left; startY = rect.top; }
+                                this._resizeTarget = i;
+                                this._resizeStart = {
+                                    mouseX: e.clientX,
+                                    mouseY: e.clientY,
+                                    fontSize: style.size || 90,
+                                    startX,
+                                    startY,
+                                    corner: corner.cls
+                                };
+                                document.body.style.cursor = getResizeCursor(corner.cls);
+                            });
+                            span.appendChild(handle);
+                        }
+                    }
+                    this.previewBox.appendChild(span);
+                    // 选中时置于顶层
+                    span.style.zIndex = (this.selectedCharIndices && this.selectedCharIndices.includes(i)) ? 100 : 1;
+                }
+                // 同步左侧字符选择器高亮
+                this.updateCharSelector();
+                // 监听缩放手柄拖动
+                if (!this._resizeMouseMoveHandler) {
+                    this._resizeMouseMoveHandler = (e) => {
+                        if (this._resizeTarget !== null && this._resizeStart) {
+                            const idx = this._resizeTarget;
+                            const style = this.charStyles[idx];
+                            const span = this.previewBox.querySelector(`.preview-char[data-index='${idx}']`);
+                            if (!span) return;
+                            const rect = span.getBoundingClientRect();
+                            let refX = 0, refY = 0;
+                            if (this._resizeStart.corner === 'nw') { refX = rect.right; refY = rect.bottom; }
+                            if (this._resizeStart.corner === 'ne') { refX = rect.left; refY = rect.bottom; }
+                            if (this._resizeStart.corner === 'sw') { refX = rect.right; refY = rect.top; }
+                            if (this._resizeStart.corner === 'se') { refX = rect.left; refY = rect.top; }
+                            const startDist = Math.hypot(this._resizeStart.mouseX - this._resizeStart.startX, this._resizeStart.mouseY - this._resizeStart.startY);
+                            const nowDist = Math.hypot(e.clientX - refX, e.clientY - refY);
+                            let scale = nowDist / (startDist || 1);
+                            let newSize = Math.max(8, this._resizeStart.fontSize * scale);
+                            style.size = newSize;
+                            this.updatePreviewBox();
+                        }
+                    };
+                    this._resizeMouseUpHandler = (e) => {
+                        if (this._resizeTarget !== null) {
+                            this.pushUndo();
+                            this._resizeTarget = null;
+                            this._resizeStart = null;
+                            document.body.style.cursor = '';
+                        }
+                    };
+                    document.addEventListener('mousemove', this._resizeMouseMoveHandler);
+                    document.addEventListener('mouseup', this._resizeMouseUpHandler);
+                }
+                // 多选时渲染群组大方框和手柄
+                if (this.selectedCharIndices && this.selectedCharIndices.length > 1) {
+                    // 计算所有选中字的最小包围盒
+                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                    for (const idx of this.selectedCharIndices) {
+                        const span = this.previewBox.querySelector(`.preview-char[data-index='${idx}']`);
+                        if (!span) continue;
+                        const rect = span.getBoundingClientRect();
+                        const boxRect = this.previewBox.getBoundingClientRect();
+                        const x1 = rect.left - boxRect.left;
+                        const y1 = rect.top - boxRect.top;
+                        const x2 = x1 + rect.width;
+                        const y2 = y1 + rect.height;
+                        minX = Math.min(minX, x1);
+                        minY = Math.min(minY, y1);
+                        maxX = Math.max(maxX, x2);
+                        maxY = Math.max(maxY, y2);
+                    }
+                    if (minX < maxX && minY < maxY) {
+                        const groupBox = document.createElement('div');
+                        groupBox.className = 'group-bbox';
+                        groupBox.style.left = minX + 'px';
+                        groupBox.style.top = minY + 'px';
+                        groupBox.style.width = (maxX - minX) + 'px';
+                        groupBox.style.height = (maxY - minY) + 'px';
+                        // 四角手柄
+                        const corners = [
+                            { cls: 'nw', x: 0, y: 0 },
+                            { cls: 'ne', x: maxX - minX, y: 0 },
+                            { cls: 'sw', x: 0, y: maxY - minY },
+                            { cls: 'se', x: maxX - minX, y: maxY - minY }
+                        ];
+                        for (const corner of corners) {
+                            const handle = document.createElement('div');
+                            handle.className = 'resize-handle ' + corner.cls;
+                            handle.style.position = 'absolute';
+                            handle.style.left = (corner.x - 7) + 'px';
+                            handle.style.top = (corner.y - 7) + 'px';
+                            handle.addEventListener('mousedown', (e) => {
+                                e.stopPropagation();
+                                this._groupResize = {
+                                    startX: e.clientX,
+                                    startY: e.clientY,
+                                    minX, minY, maxX, maxY,
+                                    width: maxX - minX,
+                                    height: maxY - minY,
+                                    centerX: (minX + maxX) / 2,
+                                    centerY: (minY + maxY) / 2,
+                                    fontSizes: this.selectedCharIndices.map(idx => this.charStyles[idx].size || 90),
+                                    positions: this.selectedCharIndices.map(idx => {
+                                        // 记录每个字中心点相对group中心的偏移
+                                        const span = this.previewBox.querySelector(`.preview-char[data-index='${idx}']`);
+                                        const rect = span.getBoundingClientRect();
+                                        const boxRect = this.previewBox.getBoundingClientRect();
+                                        const cx = rect.left - boxRect.left + rect.width/2;
+                                        const cy = rect.top - boxRect.top + rect.height/2;
+                                        return { cx, cy };
+                                    }),
+                                    corner: corner.cls
+                                };
+                                document.body.style.cursor = getResizeCursor(corner.cls);
+                            });
+                            groupBox.appendChild(handle);
+                        }
+                        this.previewBox.appendChild(groupBox);
+                    }
+                }
+                // 监听群组缩放手柄拖动
+                if (!this._groupResizeMouseMoveHandler) {
+                    this._groupResizeMouseMoveHandler = (e) => {
+                        if (this._groupResize) {
+                            const start = this._groupResize;
+                            // 以对角线距离变化为缩放因子
+                            let refX = 0, refY = 0;
+                            if (start.corner === 'nw') { refX = start.maxX; refY = start.maxY; }
+                            if (start.corner === 'ne') { refX = start.minX; refY = start.maxY; }
+                            if (start.corner === 'sw') { refX = start.maxX; refY = start.minY; }
+                            if (start.corner === 'se') { refX = start.minX; refY = start.minY; }
+                            const startDist = Math.hypot(start.startX - refX, start.startY - refY);
+                            const nowDist = Math.hypot(e.clientX - refX, e.clientY - refY);
+                            let scale = nowDist / (startDist || 1);
+                            // 限制缩放比例
+                            scale = Math.max(0.2, Math.min(5, scale));
+                            // 缩放时群组中心保持不变
+                            const boxRect = this.previewBox.getBoundingClientRect();
+                            for (let i = 0; i < this.selectedCharIndices.length; i++) {
+                                const idx = this.selectedCharIndices[i];
+                                const style = this.charStyles[idx];
+                                // 缩放字体大小
+                                style.size = (this._groupResize.fontSizes[i] || 90) * scale;
+                            }
+                            // 重新计算所有字的包围盒，获得缩放后宽高
+                            let newCenters = [];
+                            for (let i = 0; i < this.selectedCharIndices.length; i++) {
+                                const idx = this.selectedCharIndices[i];
+                                const style = this.charStyles[idx];
+                                const fontSize = style.size;
+                                let fontObj = this.fontObjects[style.font];
+                                let bbox = null, glyphScale = 1;
+                                if (fontObj) {
+                                    const text = this.previewInput.value || '';
+                                    const glyph = fontObj.charToGlyph(text[idx]);
+                                    if (glyph) {
+                                        bbox = glyph.getBoundingBox();
+                                        glyphScale = fontSize / fontObj.unitsPerEm;
+                                    }
+                                }
+                                let width = fontSize, height = fontSize;
+                                if (bbox && (bbox.x2 - bbox.x1) > 0 && (bbox.y2 - bbox.y1) > 0) {
+                                    width = (bbox.x2 - bbox.x1) * glyphScale;
+                                    height = (bbox.y2 - bbox.y1) * glyphScale;
+                                }
+                                // 计算缩放后中心点相对group中心的向量
+                                const relX = this._groupResize.positions[i].cx - this._groupResize.centerX;
+                                const relY = this._groupResize.positions[i].cy - this._groupResize.centerY;
+                                const newCx = this._groupResize.centerX + relX * scale;
+                                const newCy = this._groupResize.centerY + relY * scale;
+                                newCenters.push({ newCx, newCy, width, height });
+                            }
+                            // 反算百分比，保证缩放后群组中心不动
+                            for (let i = 0; i < this.selectedCharIndices.length; i++) {
+                                const idx = this.selectedCharIndices[i];
+                                const style = this.charStyles[idx];
+                                const { newCx, newCy, width, height } = newCenters[i];
+                                // 用左上角坐标算百分比，保证缩放后群组中心不动
+                                const left = newCx - width / 2;
+                                const top = newCy - height / 2;
+                                style.x = (left / (boxRect.width - width)) * 100;
+                                style.y = (top / (boxRect.height - height)) * 100;
+                            }
+                            this.updatePreviewBox();
+                        }
+                    };
+                    this._groupResizeMouseUpHandler = (e) => {
+                        if (this._groupResize) {
+                            this.pushUndo();
+                            this._groupResize = null;
+                            document.body.style.cursor = '';
+                        }
+                    };
+                    document.addEventListener('mousemove', this._groupResizeMouseMoveHandler);
+                    document.addEventListener('mouseup', this._groupResizeMouseUpHandler);
+                }
+            }
+            selectChar(index, toggle = false) {
+                // toggle: true 表示允许取消选中
+                if (toggle) {
+                    if (this.selectedCharIndices.includes(index)) {
+                        // 取消选中
+                        this.selectedCharIndices = this.selectedCharIndices.filter(i => i !== index);
+                    } else {
+                        this.selectedCharIndices = [index];
+                    }
+                } else {
+                    this.selectedCharIndices = [index];
+                }
+                this.updateCharStyleControlsState();
+                this.updatePreviewBox();
+                this.showCharStyleControls();
+            }
+            updateCharStyleControlsState() {
+                if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) {
+                    this.charStyleControls.classList.add('inactive');
+                } else {
+                    this.charStyleControls.classList.remove('inactive');
+                }
+            }
+            showCharStyleControls() {
+                // 多选时，若属性一致则显示，否则为空
+                if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) {
+                    this.charFontSelect.value = '';
+                                    this.charColorInput.value = '#333333';
+                this.charColorCode.value = '333333';
+                    this.charPosX.value = 0;
+                    this.charPosY.value = 0;
+                    this.charPosXVal.textContent = 0;
+                    this.charPosYVal.textContent = 0;
+                    document.querySelectorAll('.preset-color').forEach(btn => btn.classList.remove('active'));
+                    return;
+                }
+                const first = this.charStyles[this.selectedCharIndices[0]] || { font: '', color: '#333333', x: 0, y: 0, size: 90 };
+                let allSame = (key) => this.selectedCharIndices.every(i => (this.charStyles[i]||{})[key] === first[key]);
+                // 彻底去除自动应用字体逻辑
+                this.charFontSelect.value = allSame('font') ? (first.font || '') : '';
+                this.charColorInput.value = allSame('color') ? (first.color || '#333333') : '#333333';
+                this.charColorCode.value = allSame('color') ? (first.color || '#333333').substring(1) : '333333';
+                // 滑块显示整数
+                this.charPosX.value = allSame('x') ? (first.x || 0) : 0;
+                this.charPosY.value = allSame('y') ? (first.y || 0) : 0;
+                this.charPosXVal.textContent = (allSame('x') ? Math.round(first.x || 0) : 0) + '%';
+                this.charPosYVal.textContent = (allSame('y') ? Math.round(first.y || 0) : 0) + '%';
+                // 允许滑块无级移动
+                this.charPosX.step = 'any';
+                this.charPosY.step = 'any';
+                document.querySelectorAll('.preset-color').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.getAttribute('data-color') === first.color && allSame('color')) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+            applyColorOnly() {
+                this.pushUndo();
+                if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) return;
+                const color = this.charColorInput.value;
+                for (const idx of this.selectedCharIndices) {
+                    const prev = this.charStyles[idx] || {};
+                    this.charStyles[idx] = {
+                        ...prev,
+                        color: color || prev.color
+                    };
+                }
+                this.updatePreviewBox();
+            }
+            applyCharStyle() {
+                this.pushUndo();
+                if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) return;
+                const font = this.charFontSelect.value;
+                const color = this.charColorInput.value;
+                // 百分比
+                const x = this.charPosX.value === '' ? undefined : Math.max(0, Math.min(100, parseFloat(this.charPosX.value)));
+                const y = this.charPosY.value === '' ? undefined : Math.max(0, Math.min(100, parseFloat(this.charPosY.value)));
+                for (const idx of this.selectedCharIndices) {
+                    const prev = this.charStyles[idx] || {};
+                    this.charStyles[idx] = {
+                        font: font || prev.font,
+                        color: color || prev.color,
+                        x: x !== undefined ? x : (prev.x !== undefined ? prev.x : 50),
+                        y: y !== undefined ? y : (prev.y !== undefined ? prev.y : 50),
+                        size: prev.size || 90
+                    };
+                }
+                this.updatePreviewBox();
+            }
+            _toggleCharSelect(index) {
+                this.pushUndo();
+                if (this.selectedCharIndices.includes(index)) {
+                    this.selectedCharIndices = [];
+                } else {
+                    this.selectedCharIndices = [index];
+                }
+                this.updateCharStyleControlsState();
+                this.updatePreviewBox();
+                this.showCharStyleControls();
+            }
+            _startDragChars(index, startX, startY) {
+                this.pushUndo();
+                // 拖动时不改变选中状态，若未选中则只拖动该字
+                if (!this.selectedCharIndices.includes(index)) {
+                    this.selectedCharIndices = [index];
+                    this.updateCharStyleControlsState();
+                    this.updatePreviewBox();
+                    this.showCharStyleControls();
+                }
+                // 记录所有被选中字符的原始中心点
+                const boxRect = this.previewBox.getBoundingClientRect();
+                this._dragStartCenters = this.selectedCharIndices.map(idx => {
+                    const style = this.charStyles[idx];
+                    return {
+                        idx,
+                        x: style.x,
+                        y: style.y,
+                        size: style.size || 90
+                    };
+                });
+                this._dragStartMouse = { x: startX, y: startY };
+                this._dragBoxRect = boxRect;
+            }
+            _doDragChars(clientX, clientY) {
+                const boxW = this._dragBoxRect.width;
+                const boxH = this._dragBoxRect.height;
+                const dx = clientX - this._dragStartMouse.x;
+                const dy = clientY - this._dragStartMouse.y;
+                for (let i = 0; i < this._dragStartCenters.length; i++) {
+                    const { idx, x: startX, y: startY, size } = this._dragStartCenters[i];
+                    let fontObj = this.fontObjects[this.charStyles[idx].font];
+                    let bbox = null, scale = 1;
+                    if (fontObj) {
+                        const glyph = fontObj.charToGlyph(this.previewInput.value[idx]);
+                        if (glyph) {
+                            bbox = glyph.getBoundingBox();
+                            scale = size / fontObj.unitsPerEm;
+                        }
+                    }
+                    let width = size;
+                    if (bbox && (bbox.x2 - bbox.x1) > 0) {
+                        width = (bbox.x2 - bbox.x1) * scale;
+                    }
+                    // 拖动时严格线性映射
+                    const left0 = startX / 100 * (boxW - width);
+                    const top0 = startY / 100 * (boxH - size);
+                    let left = left0 + dx;
+                    let top = top0 + dy;
+                    // 反推percentX/percentY
+                    let percentX = (left / (boxW - width)) * 100;
+                    let percentY = (top / (boxH - size)) * 100;
+                    percentX = Math.max(0, Math.min(100, percentX));
+                    percentY = Math.max(0, Math.min(100, percentY));
+                    this.charStyles[idx].x = percentX;
+                    this.charStyles[idx].y = percentY;
+                }
+                this.updatePreviewBox();
+                this.showCharStyleControls();
+            }
+            _endDragChars() {
+                this.pushUndo();
+                this._dragStartCenters = null;
+                this._dragStartMouse = null;
+                this._dragBoxRect = null;
+            }
+            showProgress() {
+                this.progressContainer.style.display = 'block';
+                this.updateProgress(0);
+            }
+            hideProgress() {
+                this.progressContainer.style.display = 'none';
+            }
+            updateProgress(percentage) {
+                this.progressFill.style.width = `${percentage}%`;
+                this.progressText.textContent = `处理中... ${Math.round(percentage)}%`;
+            }
+            showError(message) {
+                this.errorMessage.textContent = message;
+                this.errorMessage.style.display = 'block';
+                setTimeout(() => {
+                    this.errorMessage.style.display = 'none';
+                }, 5000);
+            }
+            showSuccess(message) {
+                this.successMessage.textContent = message;
+                this.successMessage.style.display = 'block';
+                setTimeout(() => {
+                    this.successMessage.style.display = 'none';
+                }, 3000);
+            }
+            hideMessages() {
+                this.errorMessage.style.display = 'none';
+                this.successMessage.style.display = 'none';
+            }
+            updateSyncStatus(status, color) {
+                const syncStatusElement = document.getElementById('syncStatus');
+                if (syncStatusElement) {
+                    syncStatusElement.textContent = `(${status})`;
+                    syncStatusElement.style.color = color;
+                }
+            }
+            updateColorDisplay() {
+                const colorDisplay = document.getElementById('colorDisplay');
+                if (colorDisplay) {
+                    colorDisplay.style.backgroundColor = this.charColorInput.value;
+                }
+            }
+            // 框选多选
+            _initBoxSelection() {
+                let isSelecting = false;
+                let startX = 0, startY = 0;
+                let selectionBox = null;
+                const previewBox = this.previewBox;
+                previewBox.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return;
+                    if (e.target !== previewBox) return;
+                    isSelecting = true;
+                    startX = e.offsetX;
+                    startY = e.offsetY;
+                    selectionBox = document.createElement('div');
+                    selectionBox.style.position = 'absolute';
+                    selectionBox.style.left = startX + 'px';
+                    selectionBox.style.top = startY + 'px';
+                    selectionBox.style.width = '0px';
+                    selectionBox.style.height = '0px';
+                    selectionBox.style.border = '1.5px dashed #667eea';
+                    selectionBox.style.background = 'rgba(102,126,234,0.08)';
+                    selectionBox.style.pointerEvents = 'none';
+                    selectionBox.style.zIndex = 1000;
+                    previewBox.appendChild(selectionBox);
+                    document.body.style.userSelect = 'none';
+                });
+                document.addEventListener('mousemove', (e) => {
+                    if (!isSelecting) return;
+                    const boxRect = previewBox.getBoundingClientRect();
+                    const mouseX = e.clientX - boxRect.left;
+                    const mouseY = e.clientY - boxRect.top;
+                    const x = Math.min(startX, mouseX);
+                    const y = Math.min(startY, mouseY);
+                    const w = Math.abs(mouseX - startX);
+                    const h = Math.abs(mouseY - startY);
+                    selectionBox.style.left = x + 'px';
+                    selectionBox.style.top = y + 'px';
+                    selectionBox.style.width = w + 'px';
+                    selectionBox.style.height = h + 'px';
+                });
+                document.addEventListener('mouseup', (e) => {
+                    if (!isSelecting) return;
+                    isSelecting = false;
+                    const boxRect = previewBox.getBoundingClientRect();
+                    const x1 = Math.min(startX, e.clientX - boxRect.left);
+                    const y1 = Math.min(startY, e.clientY - boxRect.top);
+                    const x2 = Math.max(startX, e.clientX - boxRect.left);
+                    const y2 = Math.max(startY, e.clientY - boxRect.top);
+                    // 判断哪些字被框选
+                    const selected = [];
+                    for (let i = 0; i < previewBox.children.length; i++) {
+                        const span = previewBox.children[i];
+                        if (!span.classList.contains('preview-char')) continue;
+                        const rect = span.getBoundingClientRect();
+                        const px = rect.left - boxRect.left + rect.width/2;
+                        const py = rect.top - boxRect.top + rect.height/2;
+                        if (px >= x1 && px <= x2 && py >= y1 && py <= y2) {
+                            selected.push(parseInt(span.getAttribute('data-index')));
+                        }
+                    }
+                    this.selectedCharIndices = selected;
+                    this.updateCharStyleControlsState();
+                    this.updatePreviewBox();
+                    this.showCharStyleControls();
+                    if (selectionBox) selectionBox.remove();
+                    document.body.style.userSelect = '';
+                });
+            }
+            updateCharSelector() {
+                // 渲染左侧字符选择器
+                const text = this.previewInput.value || '';
+                this.charSelector.innerHTML = '';
+                for (let i = 0; i < text.length; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'char-btn';
+                    btn.setAttribute('data-index', i);
+                    btn.type = 'button';
+                    btn.textContent = text[i] === ' ' ? '␣' : text[i];
+                    if (this.selectedCharIndices.includes(i)) {
+                        btn.classList.add('selected');
+                    }
+                    this.charSelector.appendChild(btn);
+                }
+            }
+            // 撤销功能
+            pushUndo() {
+                this.undoStack.push({
+                    charStyles: deepCopy(this.charStyles),
+                    selectedCharIndices: deepCopy(this.selectedCharIndices),
+                    groupScale: this.groupScale
+                });
+                if (this.undoStack.length > 100) this.undoStack.shift();
+            }
+            undo() {
+                if (this.undoStack.length === 0) return;
+                const prev = this.undoStack.pop();
+                this.charStyles = deepCopy(prev.charStyles);
+                this.selectedCharIndices = deepCopy(prev.selectedCharIndices);
+                this.groupScale = prev.groupScale || 1;
+                this.updatePreviewBox();
+                this.showCharStyleControls();
+            }
+            // 框选辅助
+            showSelectionRect() {
+                if (!this.selectionRect) {
+                    this.selectionRect = document.createElement('div');
+                    this.selectionRect.className = 'selection-rect';
+                    this.previewBox.appendChild(this.selectionRect);
+                }
+                const x1 = Math.min(this.boxSelectStart.x, this.boxSelectEnd.x);
+                const y1 = Math.min(this.boxSelectStart.y, this.boxSelectEnd.y);
+                const x2 = Math.max(this.boxSelectStart.x, this.boxSelectEnd.x);
+                const y2 = Math.max(this.boxSelectStart.y, this.boxSelectEnd.y);
+                this.selectionRect.style.left = x1 + 'px';
+                this.selectionRect.style.top = y1 + 'px';
+                this.selectionRect.style.width = (x2 - x1) + 'px';
+                this.selectionRect.style.height = (y2 - y1) + 'px';
+            }
+            hideSelectionRect() {
+                if (this.selectionRect) {
+                    this.selectionRect.remove();
+                    this.selectionRect = null;
+                }
+            }
+            handleBoxSelect() {
+                const rect = this.previewBox.getBoundingClientRect();
+                const x1 = Math.min(this.boxSelectStart.x, this.boxSelectEnd.x);
+                const y1 = Math.min(this.boxSelectStart.y, this.boxSelectEnd.y);
+                const x2 = Math.max(this.boxSelectStart.x, this.boxSelectEnd.x);
+                const y2 = Math.max(this.boxSelectStart.y, this.boxSelectEnd.y);
+                const selected = [];
+                for (let i = 0; i < this.previewBox.children.length; i++) {
+                    const span = this.previewBox.children[i];
+                    if (!span.classList.contains('preview-char')) continue;
+                    const srect = span.getBoundingClientRect();
+                    const px1 = srect.left - rect.left;
+                    const py1 = srect.top - rect.top;
+                    const px2 = px1 + srect.width;
+                    const py2 = py1 + srect.height;
+                    if (px2 > x1 && px1 < x2 && py2 > y1 && py1 < y2) {
+                        selected.push(parseInt(span.getAttribute('data-index')));
+                    }
+                }
+                if (selected.length > 0) {
+                    this.selectedCharIndices = selected;
+                    this.groupScale = 1;
+                    this.showGroupScaleBar();
+                } else {
+                    this.selectedCharIndices = [];
+                    this.hideGroupScaleBar();
+                }
+                this.updateCharStyleControlsState();
+                this.updatePreviewBox();
+                this.showCharStyleControls();
+            }
+            showGroupScaleBar() {
+                this.hideGroupScaleBar();
+                if (!this.selectedCharIndices || this.selectedCharIndices.length < 2) return;
+                const bar = document.createElement('div');
+                bar.className = 'group-scale-bar';
+                bar.innerHTML = `<span>整体缩放</span><input type="range" min="0.2" max="3" step="0.01" value="${this.groupScale}"><span id="groupScaleVal">${(this.groupScale*100).toFixed(0)}%</span>`;
+                bar.querySelector('input').addEventListener('input', (e) => {
+                    const scale = parseFloat(e.target.value);
+                    this.groupScale = scale;
+                    this.applyGroupScale();
+                    bar.querySelector('#groupScaleVal').textContent = (scale*100).toFixed(0) + '%';
+                });
+                this.previewBox.appendChild(bar);
+            }
+            hideGroupScaleBar() {
+                const bar = this.previewBox.querySelector('.group-scale-bar');
+                if (bar) bar.remove();
+            }
+            applyGroupScale() {
+                if (!this.selectedCharIndices || this.selectedCharIndices.length < 2) return;
+                this.pushUndo();
+                // 以选区中心为锚点整体缩放
+                const indices = this.selectedCharIndices;
+                let cx = 0, cy = 0;
+                for (const idx of indices) {
+                    cx += this.charStyles[idx].x;
+                    cy += this.charStyles[idx].y;
+                }
+                cx /= indices.length;
+                cy /= indices.length;
+                for (const idx of indices) {
+                    const style = this.charStyles[idx];
+                    style.size = (style.size || 90) * this.groupScale;
+                    // 缩放时保持相对中心的距离
+                    style.x = cx + (style.x - cx) * this.groupScale;
+                    style.y = cy + (style.y - cy) * this.groupScale;
+                }
+                this.updatePreviewBox();
+            }
+
+            renderCurrentFonts() {
+                if (!this.currentFonts) return;
+                console.log('开始渲染字体列表，当前uploadedFonts:', this.uploadedFonts);
+                
+                let html = '<div class="current-fonts-list">';
+                
+                // 只显示从Supabase上传的字体
+                for (const font of this.uploadedFonts) {
+                    console.log(`渲染字体: ${font.name}`);
+                    // 显示带时间戳的原始文件名
+                    const displayName = font.originalName || font.name;
+                    html += `<div class="current-font-item" style="flex-direction:row;align-items:flex-start;gap:15px;padding:12px 0;">
+                        <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;">
+                            <span class="current-font-sample" style="font-family:'${font.name}';font-size:1.5em;">AaBbCc123</span>
+                            <div class="font-meta-vertical">
+                                <div class="font-original-name" style="word-wrap:break-word;overflow-wrap:break-word;">(${displayName})</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;flex-direction:row;gap:8px;align-items:center;margin-top:4px;flex-shrink:0;">
+                            <button class="current-font-download" style="background:#51cf66;border:none;border-radius:5px;padding:4px 12px;cursor:pointer;font-size:0.97em;color:#fff;transition:background 0.2s;" onclick="document.fontUploader.applyFontToSelection('${font.name}')">应用</button>
+                            <a class="current-font-download" href="${font.url}" download>下载</a>
+                        </div>
+                    </div>`;
+                }
+                
+                // 如果没有上传的字体，显示提示信息
+                if (this.uploadedFonts.length === 0) {
+                    html += `<div style="text-align:center;color:#666;padding:20px;font-size:0.95em;">
+                        暂无Supabase字体<br/>
+                        <span style="font-size:0.9em;color:#999;">请上传字体文件到Supabase</span>
+                    </div>`;
+                }
+                
+                html += '</div>';
+                this.currentFonts.innerHTML = html;
+                
+                // 移除原来的radio按钮事件绑定，现在使用按钮点击事件
+            }
+
+            
+            applyFontToSelection(fontName) {
+                // 如果没有选中字符，不执行任何操作
+                if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) {
+                    return;
+                }
+                
+                this.pushUndo();
+                
+                // 只对选中的字符应用字体
+                for (const idx of this.selectedCharIndices) {
+                    if (this.charStyles[idx]) {
+                        this.charStyles[idx].font = fontName;
+                    }
+                }
+                this.updatePreviewBox();
+                this.showCharStyleControls();
+            }
+            
+            async loadExistingFonts() {
+                try {
+                    // 更新同步状态为"同步中"
+                    this.updateSyncStatus('同步中...', '#ffa500');
+                    console.log('=== 开始加载Supabase中的现有字体 ===');
+                    console.log('Supabase客户端状态:', window.supabase ? '已初始化' : '未初始化');
+                    
+                    if (!window.supabase) {
+                        console.error('Supabase客户端未初始化，等待1秒后重试...');
+                        setTimeout(() => this.loadExistingFonts(), 1000);
+                        return;
+                    }
+                    
+                    // 从Supabase存储中列出所有字体文件
+                    console.log('正在从Supabase获取文件列表...');
+                    const { data, error } = await window.supabase.storage
+                        .from('82fonts')
+                        .list('', {
+                            limit: 100,
+                            offset: 0
+                        });
+                    
+                    console.log('Supabase响应:', { data, error });
+                    console.log('data内容:', data);
+                    
+                    if (error) {
+                        console.error('Failed to load existing fonts:', error);
+                        this.showError('加载Supabase字体失败: ' + error.message);
+                        this.updateSyncStatus('同步失败', '#ff4444');
+                        return;
+                    }
+                    
+                    if (!data || data.length === 0) {
+                        console.log('No existing fonts found in Supabase');
+                        console.log('data:', data);
+                        this.updateSyncStatus('同步成功', '#51cf66');
+                        return;
+                    }
+                    
+                    console.log('所有文件列表:', data);
+                    
+                    // 过滤出字体文件（.otf和.ttf）
+                    const fontFiles = data.filter(file => 
+                        file.name.toLowerCase().endsWith('.otf') || 
+                        file.name.toLowerCase().endsWith('.ttf')
+                    );
+                    
+                    console.log(`找到 ${fontFiles.length} 个字体文件:`, fontFiles);
+                    
+                    if (fontFiles.length === 0) {
+                        console.log('No font files found in Supabase');
+                        console.log('所有文件都不是字体格式');
+                        this.updateSyncStatus('同步成功', '#51cf66');
+                        return;
+                    }
+                    
+                    // 处理每个字体文件
+                    let loadedCount = 0;
+                    for (const file of fontFiles) {
+                        try {
+                            console.log(`正在处理字体文件: ${file.name}`);
+                            
+                            // 构建字体URL
+                            const url = `https://ujhfluevvppgkyuazqjn.supabase.co/storage/v1/object/public/82fonts/${file.name}`;
+                            console.log(`字体URL: ${url}`);
+                            
+                            // 提取字体名称
+                            const fontName = this.extractFontName(file.name);
+                            console.log(`提取的字体名称: ${fontName}`);
+                            
+                            // 检查是否已经存在
+                            if (this.uploadedFonts.some(f => f.name === fontName)) {
+                                console.log(`Font ${fontName} already exists, skipping`);
+                                continue;
+                            }
+                            
+                            // 注册字体到CSS
+                            console.log(`注册字体: ${fontName}`);
+                            this.registerFont(fontName, url, file.name.toLowerCase().endsWith('.otf') ? 'font/otf' : 'font/ttf');
+                            
+                                                    // 添加到上传字体列表
+                        const fontInfo = {
+                            name: fontName,
+                            url: url,
+                            format: this.getFontFormatFromName(file.name),
+                            originalName: file.name, // 保存带时间戳的完整文件名
+                            size: this.formatFileSize(file.metadata?.size || 0)
+                        };
+                        this.uploadedFonts.push(fontInfo);
+                        console.log(`添加到uploadedFonts:`, fontInfo);
+                            
+                            // 解析字体文件为 opentype.Font
+                            try {
+                                console.log(`开始解析字体: ${fontName}`);
+                                const fontBuffer = await fetch(url).then(r => r.arrayBuffer());
+                                opentype.load(fontBuffer, (err, font) => {
+                                    if (!err && font) {
+                                        this.fontObjects[fontName] = font;
+                                        console.log(`成功解析字体: ${fontName}`);
+                                    } else {
+                                        console.warn(`解析字体失败: ${fontName}`, err);
+                                    }
+                                });
+                            } catch (e) {
+                                console.warn('Failed to parse font:', fontName, e);
+                            }
+                            
+                            loadedCount++;
+                            console.log(`已处理 ${loadedCount} 个字体`);
+                            
+                        } catch (error) {
+                            console.error(`Failed to process font ${file.name}:`, error);
+                        }
+                    }
+                    
+                    console.log(`总共加载了 ${loadedCount} 个字体`);
+                    console.log('当前uploadedFonts数组:', this.uploadedFonts);
+                    
+                    // 更新界面
+                    console.log('开始更新界面...');
+                    this.renderCurrentFonts();
+                    this.updateCharFontSelect();
+                    this.updatePreviewBox();
+                    
+                    console.log(`Successfully loaded ${loadedCount} existing fonts`);
+                    
+                    // 更新同步状态为成功
+                    this.updateSyncStatus('同步成功', '#51cf66');
+                    
+                    // 移除加载成功弹窗
+                    
+                } catch (error) {
+                    console.error('Error loading existing fonts:', error);
+                    this.showError('加载Supabase字体时发生错误: ' + error.message);
+                    this.updateSyncStatus('同步失败', '#ff4444');
+                }
+            }
+            
+            getFontFormatFromName(filename) {
+                if (filename.toLowerCase().endsWith('.otf')) return 'OTF';
+                if (filename.toLowerCase().endsWith('.ttf')) return 'TTF';
+                return '未知';
+            }
+            
+            // 测试方法，可以在控制台调用
+            testSupabaseConnection() {
+                console.log('测试Supabase连接...');
+                console.log('window.supabase:', window.supabase);
+                if (window.supabase) {
+                    window.supabase.storage.from('82fonts').list('').then(({data, error}) => {
+                        console.log('测试结果:', {data, error});
+                    });
+                }
+            }
+
+            async handleFiles(files) {
+                if (!files || files.length === 0) return;
+                this.hideMessages();
+                
+                const validFiles = Array.from(files).filter(file => {
+                    const isValid = file.type === 'font/otf' || file.type === 'font/ttf' || file.name.toLowerCase().endsWith('.otf') || file.name.toLowerCase().endsWith('.ttf');
+                    if (!isValid) {
+                        this.showError(`不支持的格式: ${file.name}，仅支持 OTF 和 TTF`);
+                    }
+                    return isValid;
+                });
+                
+                if (validFiles.length === 0) {
+                    return;
+                }
+                
+                let processedFiles = 0;
+                const totalFiles = validFiles.length;
+                
+                for (const file of validFiles) {
+                    try {
+                        // 使用新的上传功能
+                        // 生成日期时间戳：年份后两位+月日
+                        const now = new Date();
+                        const year = now.getFullYear().toString().slice(-2); // 年份后两位
+                        const month = String(now.getMonth() + 1).padStart(2, '0'); // 月份，补零
+                        const day = String(now.getDate()).padStart(2, '0'); // 日期，补零
+                        const datePrefix = `${year}${month}${day}`; // 如：250728
+                        
+                        const filename = `${datePrefix}_${file.name}`;
+                        const { data, error } = await window.supabase.storage
+                            .from('82fonts')
+                            .upload(filename, file);
+                            
+                        if (error) {
+                            throw new Error(error.message);
+                        }
+                        
+                        // 获取上传后的URL
+                        const url = `https://ujhfluevvppgkyuazqjn.supabase.co/storage/v1/object/public/82fonts/${filename}`;
+                        
+                        // 处理字体文件
+                        const fontName = this.extractFontName(file.name);
+                        this.registerFont(fontName, url, file.type);
+                        this.uploadedFonts.push({
+                            name: fontName,
+                            url: url,
+                            format: this.getFontFormat(file),
+                            originalName: filename, // 保存带时间戳的完整文件名
+                            size: this.formatFileSize(file.size)
+                        });
+                        
+                        // 解析字体文件为 opentype.Font
+                        try {
+                            const fontBuffer = await fetch(url).then(r => r.arrayBuffer());
+                            opentype.load(fontBuffer, (err, font) => {
+                                if (!err && font) {
+                                    this.fontObjects[fontName] = font;
+                                }
+                            });
+                        } catch (e) {
+                            console.warn('Failed to parse font:', fontName, e);
+                        }
+                        
+                        processedFiles++;
+                        
+                    } catch (error) {
+                        this.showError(`处理失败 ${file.name}: ${error.message}`);
+                    }
+                }
+                
+                this.showSuccess(`${processedFiles} 个字体上传成功!`);
+                this.updateCharFontSelect();
+                
+                this.updatePreviewBox();
+                this.renderCurrentFonts();
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            document.fontUploader = new FontUploader();
+        });
+        // 获取缩放手柄对应的鼠标样式
+        function getResizeCursor(corner) {
+            switch (corner) {
+                case 'nw': return 'nwse-resize';
+                case 'se': return 'nwse-resize';
+                case 'ne': return 'nesw-resize';
+                case 'sw': return 'nesw-resize';
+                default: return 'nwse-resize';
+            }
+        }
+    </script>
+</body>
+</html>
