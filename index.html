@@ -31,7 +31,7 @@
             min-width: 400px;
             max-width: 400px;
         }
-        .right-panel {
+        .main-right-panel {
             flex: 1;
             padding: 0;
             display: flex;
@@ -542,6 +542,9 @@
             align-items: stretch;
             padding: 40px 30px;
             box-sizing: border-box;
+            height: 100vh;
+            overflow-y: auto;
+            flex-shrink: 0;
         }
         .current-fonts {
             background: #fff;
@@ -550,11 +553,57 @@
             padding: 10px 12px;
             margin-top: 18px;
             font-size: 0.98em;
+            position: relative;
+            height: 600px !important;
+            overflow: hidden;
+            flex-shrink: 0;
+            min-height: 600px;
+            max-height: 600px;
+            box-sizing: border-box;
         }
         .current-fonts-list {
             display: flex;
             flex-direction: column;
             gap: 10px;
+            height: 100%;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            box-sizing: border-box;
+            padding-right: 5px;
+        }
+        .current-fonts-list::-webkit-scrollbar {
+            display: none;
+        }
+        .font-nav-arrow {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 20px;
+            background: rgba(102, 126, 234, 0.8);
+            border-radius: 15px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        .font-nav-arrow:hover {
+            background: rgba(102, 126, 234, 1);
+        }
+        .font-nav-arrow.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .font-nav-arrow.up {
+            top: 5px;
+        }
+        .font-nav-arrow.down {
+            bottom: 5px;
         }
         .current-font-item {
             display: flex;
@@ -660,11 +709,11 @@
                             <div class="color-input-container">
                                 <div class="custom-color-picker" id="customColorPicker">
                                     <div class="color-display" id="colorDisplay"></div>
-                                    <input type="color" id="charColorInput" class="char-color-input" value="#333333">
+                                    <input type="color" id="charColorInput" class="char-color-input" value="#000000">
                                 </div>
                                 <div class="color-input-wrapper">
                                     <span class="color-prefix">#</span>
-                                    <input type="text" id="charColorCode" class="char-color-code" placeholder="333333" value="333333">
+                                    <input type="text" id="charColorCode" class="char-color-code" placeholder="000000" value="000000">
                                 </div>
                             </div>
                             <div class="preset-colors">
@@ -1185,7 +1234,7 @@
                         const defaultFont = this.uploadedFonts.length > 0 ? this.uploadedFonts[0].name : '';
                         this.charStyles.push({ 
                             font: this.globalFont || '', 
-                            color: '#333333',
+                            color: '#000000',
                             x: percentX,
                             y: isInitialLoad ? 42 : 0, // 初始加载时垂直居中，新输入时从顶部开始
                             size: 90
@@ -1225,7 +1274,7 @@
                 }
                 for (let i = 0; i < text.length; i++) {
                     const char = text[i] === ' ' ? '\u00A0' : text[i];
-                    const style = this.charStyles[i] || { font: '', color: '#333333', x: 50, y: 50, size: 90 };
+                    const style = this.charStyles[i] || { font: '', color: '#000000', x: 50, y: 50, size: 90 };
                     const fontSize = style.size || 90;
                     let fontObj = this.fontObjects[style.font];
                     let bbox = null, scale = 1;
@@ -1264,7 +1313,7 @@
                     const inner = document.createElement('span');
                     inner.className = 'char-inner';
                     inner.textContent = text[i];
-                    inner.style.color = style.color || '#333333';
+                    inner.style.color = style.color || '#000000';
                     inner.setAttribute('data-index', i);
                     inner.style.position = 'absolute';
                     inner.style.left = '0px';
@@ -1517,8 +1566,9 @@
                 // 多选时，若属性一致则显示，否则为空
                 if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) {
                     this.charFontSelect.value = '';
-                                    this.charColorInput.value = '#333333';
-                this.charColorCode.value = '333333';
+                    this.charColorInput.value = '#000000';
+                    this.charColorCode.value = '000000';
+                    this.updateColorDisplay();
                     this.charPosX.value = 0;
                     this.charPosY.value = 0;
                     this.charPosXVal.textContent = 0;
@@ -1526,12 +1576,13 @@
                     document.querySelectorAll('.preset-color').forEach(btn => btn.classList.remove('active'));
                     return;
                 }
-                const first = this.charStyles[this.selectedCharIndices[0]] || { font: '', color: '#333333', x: 0, y: 0, size: 90 };
+                const first = this.charStyles[this.selectedCharIndices[0]] || { font: '', color: '#000000', x: 0, y: 0, size: 90 };
                 let allSame = (key) => this.selectedCharIndices.every(i => (this.charStyles[i]||{})[key] === first[key]);
                 // 彻底去除自动应用字体逻辑
                 this.charFontSelect.value = allSame('font') ? (first.font || '') : '';
-                this.charColorInput.value = allSame('color') ? (first.color || '#333333') : '#333333';
-                this.charColorCode.value = allSame('color') ? (first.color || '#333333').substring(1) : '333333';
+                this.charColorInput.value = allSame('color') ? (first.color || '#000000') : '#000000';
+                this.charColorCode.value = allSame('color') ? (first.color || '#000000').substring(1) : '000000';
+                this.updateColorDisplay();
                 // 滑块显示整数
                 this.charPosX.value = allSame('x') ? (first.x || 0) : 0;
                 this.charPosY.value = allSame('y') ? (first.y || 0) : 0;
@@ -1896,10 +1947,25 @@
                 if (!this.currentFonts) return;
                 console.log('开始渲染字体列表，当前uploadedFonts:', this.uploadedFonts);
                 
-                let html = '<div class="current-fonts-list">';
+                let html = '<div class="current-fonts-list" id="fontListContainer">';
                 
-                // 只显示从Supabase上传的字体
-                for (const font of this.uploadedFonts) {
+                // 按时间戳排序，最新的在前面
+                const sortedFonts = [...this.uploadedFonts].sort((a, b) => {
+                    // 从文件名中提取时间戳进行比较
+                    const getTimestamp = (filename) => {
+                        const match = filename.match(/^(\d{6})_/);
+                        return match ? match[1] : '000000';
+                    };
+                    
+                    const timestampA = getTimestamp(a.originalName || '');
+                    const timestampB = getTimestamp(b.originalName || '');
+                    
+                    // 降序排列，最新的在前面
+                    return timestampB.localeCompare(timestampA);
+                });
+                
+                // 显示排序后的字体
+                for (const font of sortedFonts) {
                     console.log(`渲染字体: ${font.name}`);
                     // 显示带时间戳的原始文件名
                     const displayName = font.originalName || font.name;
@@ -1926,9 +1992,15 @@
                 }
                 
                 html += '</div>';
+                
+                // 添加导航箭头
+                html += '<div class="font-nav-arrow up" id="fontNavUp">▲</div>';
+                html += '<div class="font-nav-arrow down" id="fontNavDown">▼</div>';
+                
                 this.currentFonts.innerHTML = html;
                 
-                // 移除原来的radio按钮事件绑定，现在使用按钮点击事件
+                // 初始化导航箭头
+                this.initFontNavigation();
             }
 
             
@@ -2006,9 +2078,23 @@
                         return;
                     }
                     
+                    // 按时间戳排序字体文件，最新的在前面
+                    const sortedFontFiles = fontFiles.sort((a, b) => {
+                        const getTimestamp = (filename) => {
+                            const match = filename.match(/^(\d{6})_/);
+                            return match ? match[1] : '000000';
+                        };
+                        
+                        const timestampA = getTimestamp(a.name);
+                        const timestampB = getTimestamp(b.name);
+                        
+                        // 降序排列，最新的在前面
+                        return timestampB.localeCompare(timestampA);
+                    });
+                    
                     // 处理每个字体文件
                     let loadedCount = 0;
-                    for (const file of fontFiles) {
+                    for (const file of sortedFontFiles) {
                         try {
                             console.log(`正在处理字体文件: ${file.name}`);
                             
@@ -2092,6 +2178,58 @@
                 if (filename.toLowerCase().endsWith('.otf')) return 'OTF';
                 if (filename.toLowerCase().endsWith('.ttf')) return 'TTF';
                 return '未知';
+            }
+            
+            // 初始化字体导航箭头
+            initFontNavigation() {
+                const container = document.getElementById('fontListContainer');
+                const upArrow = document.getElementById('fontNavUp');
+                const downArrow = document.getElementById('fontNavDown');
+                
+                if (!container || !upArrow || !downArrow) return;
+                
+                // 检查是否需要显示箭头
+                const updateArrowVisibility = () => {
+                    const scrollTop = container.scrollTop;
+                    const scrollHeight = container.scrollHeight;
+                    const clientHeight = container.clientHeight;
+                    
+                    // 上箭头：在顶部时隐藏
+                    if (scrollTop <= 0) {
+                        upArrow.classList.add('hidden');
+                    } else {
+                        upArrow.classList.remove('hidden');
+                    }
+                    
+                    // 下箭头：在底部时隐藏
+                    if (scrollTop + clientHeight >= scrollHeight) {
+                        downArrow.classList.add('hidden');
+                    } else {
+                        downArrow.classList.remove('hidden');
+                    }
+                };
+                
+                // 点击上箭头
+                upArrow.addEventListener('click', () => {
+                    container.scrollBy({
+                        top: -200,
+                        behavior: 'smooth'
+                    });
+                });
+                
+                // 点击下箭头
+                downArrow.addEventListener('click', () => {
+                    container.scrollBy({
+                        top: 200,
+                        behavior: 'smooth'
+                    });
+                });
+                
+                // 监听滚动事件
+                container.addEventListener('scroll', updateArrowVisibility);
+                
+                // 初始化箭头状态
+                updateArrowVisibility();
             }
             
             // 测试方法，可以在控制台调用
