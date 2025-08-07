@@ -30,6 +30,11 @@
             visibility: hidden;
         }
         
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -44,7 +49,6 @@
             display: flex;
             overflow: hidden;
             min-width: 0 !important;
-            height: 972px !important;
         }
         .left-panel {
             width: 383px !important;
@@ -321,6 +325,8 @@
         .preview-outer {
             width: 100%;
             height: 100%;
+            min-height: 100%;
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -328,6 +334,7 @@
         .preview-box {
             width: 100%;
             height: 100%;
+            min-height: 100%;
             background: transparent;
             border-radius: 15px;
             box-shadow: none;
@@ -1339,9 +1346,21 @@
                     this.charFontSelect.innerHTML = '<option value="">请先上传字体到Supabase</option>';
                     this.charFontSelect.disabled = true;
                 } else {
+                    // 获取当前选中的字体值
+                    const currentValue = this.charFontSelect.value;
+                    
                     this.charFontSelect.innerHTML = allFonts.map((font, idx) =>
                         `<option value="${font.name}">${font.displayName}</option>`
                     ).join('');
+                    
+                    // 如果有之前选中的字体，保持选中状态
+                    if (currentValue && allFonts.some(font => font.name === currentValue)) {
+                        this.charFontSelect.value = currentValue;
+                    } else if (allFonts.length > 0) {
+                        // 如果没有选中任何字体，默认选中第一个字体
+                        this.charFontSelect.value = allFonts[0].name;
+                    }
+                    
                     this.charFontSelect.disabled = false;
                 }
             }
@@ -1795,10 +1814,11 @@
             showCharStyleControls() {
                 // 多选时，若属性一致则显示，否则为空
                 if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) {
-                    this.charFontSelect.value = '';
-                    this.charColorInput.value = '#000000';
-                    this.charColorCode.value = '000000';
-                    this.updateColorDisplay();
+                    // 当没有选中字符时，保持字体选择器和颜色选择器的当前值，不清空
+                    // this.charFontSelect.value = ''; // 注释掉这行，保持当前选中的字体
+                    // this.charColorInput.value = '#000000'; // 注释掉这行，保持当前选中的颜色
+                    // this.charColorCode.value = '000000'; // 注释掉这行，保持当前选中的颜色
+                    // this.updateColorDisplay(); // 注释掉这行，保持当前选中的颜色
                     this.charPosX.value = 0;
                     this.charPosY.value = 0;
                     this.charPosXVal.textContent = 0;
