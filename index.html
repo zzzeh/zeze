@@ -288,6 +288,24 @@
             position: relative;
             width: 100%;
             box-sizing: border-box;
+            caret-color: transparent;
+        }
+        
+        /* 自定义光标 */
+        .custom-cursor {
+            position: absolute;
+            width: 2px;
+            height: 22px;
+            background: #5888E7;
+            animation: blink 1s infinite;
+            pointer-events: none;
+            z-index: 1000;
+            display: block;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
         }
         .preview-input:focus {
             border-color: #667eea;
@@ -401,7 +419,7 @@
             padding: 0px;
             width: 100%;
             min-width: 100%;
-            flex: 1;
+            /* 移除 flex: 1; 避免拉伸到容器底部 */
         }
         .char-style-controls.inactive {
             opacity: 0.5;
@@ -724,11 +742,11 @@
             margin-top: 0 !important;
             font-size: 0.98em !important;
             position: relative !important;
-            height: 576px !important;
+            height: 691.2px !important;
             overflow: visible !important;
             flex-shrink: 0 !important;
-            min-height: 576px !important;
-            max-height: 576px !important;
+            min-height: 691.2px !important;
+            max-height: 691.2px !important;
             box-sizing: border-box !important;
             width: 340.2px !important;
         }
@@ -763,19 +781,19 @@
             transform: translateX(-50%);
             width: 30px;
             height: 20px;
-            background: rgba(102, 126, 234, 0.8);
+            background: rgba(248, 248, 248, 1);
             border-radius: 15px;
-            display: none;
+            display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            color: white;
+            color: #5888E7;
             font-size: 12px;
             transition: all 0.3s ease;
             z-index: 10;
         }
         .font-nav-arrow:hover {
-            background: rgba(102, 126, 234, 1);
+            background: rgba(248, 248, 248, 1);
         }
         .font-nav-arrow.hidden {
             opacity: 0;
@@ -801,7 +819,11 @@
             background: rgba(0,0,0,0.05) !important;
         }
         
-        .font-download-area:hover {
+        .font-preview-btn:hover {
+            background: rgba(0,0,0,0.05) !important;
+        }
+        
+        .font-download-btn:hover {
             background: rgba(0,0,0,0.05) !important;
         }
         
@@ -873,14 +895,7 @@
                     <input type="text" id="previewInput" class="preview-input" value="Love" maxlength="100" style="padding-left:22.5px;">
                     <div class="input-line" style="position:absolute;bottom:0;left:0;right:0;height:2px;background:#5888E7;"></div>
                 </div>
-                <div id="charSelector" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; margin-left: 17px;"></div>
-                <div class="char-style-controls inactive" id="charStyleControls">
-                    <div class="input-group">
-                        <div style="position: relative;">
-                            <select id="charFontSelect" class="font-select"></select>
-                            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: #5888E7; z-index: 10;"></div>
-                        </div>
-                    </div>
+                <div class="char-style-controls" id="charStyleControls">
                     <div class="input-group">
                         <div class="color-row">
                             <div class="color-input-container">
@@ -919,6 +934,29 @@
                             <span id="charPosYVal">50%</span>
                         </div>
                     </div>
+                </div>
+            </div>
+            
+            <!-- 隐藏的字符选择器功能组 - 未来可能需要 -->
+            <div class="hidden-char-selector-group" id="hiddenCharSelectorGroup" style="display: none; position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(248, 248, 248, 1); border-top: 2px solid #5888E7; padding: 16px; box-sizing: border-box;">
+                <div style="margin-bottom: 12px; font-size: 14px; color: #333; font-weight: 500;">字符选择器 (已隐藏)</div>
+                <div id="charSelector" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;"></div>
+                <div style="text-align: center;">
+                    <button id="toggleCharSelector" style="background: #5888E7; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px;">显示字符选择器</button>
+                </div>
+            </div>
+            
+            <!-- 隐藏的字体选择器功能组 - 未来可能需要 -->
+            <div class="hidden-font-selector-group" id="hiddenFontSelectorGroup" style="display: none; position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(248, 248, 248, 1); border-top: 2px solid #5888E7; padding: 16px; box-sizing: border-box;">
+                <div style="margin-bottom: 12px; font-size: 14px; color: #333; font-weight: 500;">字体选择器 (已隐藏)</div>
+                <div class="input-group">
+                    <div style="position: relative;">
+                        <select id="charFontSelect" class="font-select"></select>
+                        <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: #5888E7; z-index: 10;"></div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 12px;">
+                    <button id="toggleFontSelector" style="background: #5888E7; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px;">显示字体选择器</button>
                 </div>
             </div>
         </div>
@@ -1070,6 +1108,12 @@
                 });
                 this.currentFonts = document.getElementById('currentFonts');
                 this.renderCurrentFonts();
+                
+                // 初始化隐藏的字符选择器
+                this.initializeHiddenCharSelector();
+                
+                // 初始化隐藏的字体选择器
+                this.initializeHiddenFontSelector();
                 // 记录当前全局应用字体名
                 this.globalFont = '82KVfont';
                 // 初始化颜色显示
@@ -1084,6 +1128,14 @@
                         this.updateCharFontSelect(); // 更新字体选择器
                         this.syncCharStylesWithText();
                         this.updatePreviewBox();
+                        
+                        // 页面加载完成后，自动聚焦到输入框并显示光标
+                        setTimeout(() => {
+                            this.previewInput.focus();
+                            // 将光标位置设置到文本末尾（最右边的字母后面）
+                            this.previewInput.setSelectionRange(this.previewInput.value.length, this.previewInput.value.length);
+                            this.createCustomCursor();
+                        }, 100);
                     });
                 });
             }
@@ -1110,9 +1162,65 @@
                 this.previewInput.addEventListener('input', () => {
                     this.syncCharStylesWithText();
                     this.updatePreviewBox();
+                    this.updateCustomCursor();
                 });
+                
+                // 自定义光标管理
+                this.previewInput.addEventListener('focus', () => {
+                    this.createCustomCursor();
+                });
+                
+                this.previewInput.addEventListener('blur', () => {
+                    this.removeCustomCursor();
+                });
+                
+                this.previewInput.addEventListener('click', () => {
+                    this.updateCustomCursor();
+                });
+                
+                this.previewInput.addEventListener('keydown', () => {
+                    setTimeout(() => {
+                        this.updateCustomCursor();
+                    }, 0);
+                });
+                
+                // 字符选择器显示/隐藏功能
+                const toggleCharSelectorBtn = document.getElementById('toggleCharSelector');
+                const hiddenCharSelectorGroup = document.getElementById('hiddenCharSelectorGroup');
+                
+                if (toggleCharSelectorBtn && hiddenCharSelectorGroup) {
+                    toggleCharSelectorBtn.addEventListener('click', () => {
+                        if (hiddenCharSelectorGroup.style.display === 'none') {
+                            hiddenCharSelectorGroup.style.display = 'block';
+                            toggleCharSelectorBtn.textContent = '隐藏字符选择器';
+                            console.log('字符选择器已显示');
+                        } else {
+                            hiddenCharSelectorGroup.style.display = 'none';
+                            toggleCharSelectorBtn.textContent = '显示字符选择器';
+                            console.log('字符选择器已隐藏');
+                        }
+                    });
+                }
+                
+                // 字体选择器显示/隐藏功能
+                const toggleFontSelectorBtn = document.getElementById('toggleFontSelector');
+                const hiddenFontSelectorGroup = document.getElementById('hiddenFontSelectorGroup');
+                
+                if (toggleFontSelectorBtn && hiddenFontSelectorGroup) {
+                    toggleFontSelectorBtn.addEventListener('click', () => {
+                        if (hiddenFontSelectorGroup.style.display === 'none') {
+                            hiddenFontSelectorGroup.style.display = 'block';
+                            toggleFontSelectorBtn.textContent = '隐藏字体选择器';
+                            console.log('字体选择器已显示');
+                        } else {
+                            hiddenFontSelectorGroup.style.display = 'none';
+                            toggleFontSelectorBtn.textContent = '显示字体选择器';
+                            console.log('字体选择器已隐藏');
+                        }
+                    });
+                }
                 this.charFontSelect.addEventListener('change', () => {
-                    this.applyCharStyle();
+                    this.applyFontOnly();
                 });
                 this.charColorInput.addEventListener('input', () => {
                     this.charColorCode.value = this.charColorInput.value.substring(1);
@@ -1417,23 +1525,26 @@
                             }
                         }
                         
-                        // 初始文字使用82KVfont，新输入的文字使用Inter字体
+                        // 初始文字使用82KVfont，新输入的文字使用当前选择的字体
                         let fontToUse;
                         if (isInitialLoad) {
                             // 初始加载时使用82KVfont
                             fontToUse = '82KVfont';
                         } else {
-                            // 新输入的文字使用Inter字体
-                            fontToUse = 'Inter, sans-serif';
+                            // 新输入的文字使用当前选择的字体
+                            fontToUse = this.charFontSelect.value || 'Inter, sans-serif';
                         }
                         
-                        // 设置初始颜色：L(浅黄), o(浅灰), v(红色), e(浅黄)
+                        // 设置初始颜色：L(浅黄), o(浅灰), v(红色), e(浅黄)，新输入的文字使用当前选择的颜色
                         let initialColor = '#000000';
                         if (isInitialLoad && text === 'Love') {
                             if (i === 0) initialColor = '#f6e370'; // L - 浅黄色
                             else if (i === 1) initialColor = '#b6b6b6'; // o - 浅灰色
                             else if (i === 2) initialColor = '#ff004d'; // v - 红色
                             else if (i === 3) initialColor = '#f6e370'; // e - 浅黄色
+                        } else if (!isInitialLoad) {
+                            // 新输入的文字使用当前选择的颜色
+                            initialColor = this.charColorInput.value || '#000000';
                         }
                         
                         // 为字母"o"（索引1）设置特殊位置
@@ -1805,11 +1916,12 @@
                 this.showCharStyleControls();
             }
             updateCharStyleControlsState() {
-                if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) {
-                    this.charStyleControls.classList.add('inactive');
-                } else {
-                    this.charStyleControls.classList.remove('inactive');
-                }
+                // 控件始终可用，不再根据选中状态添加/移除inactive类
+                // if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) {
+                //     this.charStyleControls.classList.add('inactive');
+                // } else {
+                //     this.charStyleControls.classList.remove('inactive');
+                // }
             }
             showCharStyleControls() {
                 // 多选时，若属性一致则显示，否则为空
@@ -1851,34 +1963,89 @@
             }
             applyColorOnly() {
                 this.pushUndo();
-                if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) return;
                 const color = this.charColorInput.value;
-                for (const idx of this.selectedCharIndices) {
-                    const prev = this.charStyles[idx] || {};
-                    this.charStyles[idx] = {
-                        ...prev,
-                        color: color || prev.color
-                    };
+                
+                if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) {
+                    // 如果没有选中字符，将颜色应用到所有现有字符
+                    const text = this.previewInput.value || '';
+                    for (let i = 0; i < text.length; i++) {
+                        const prev = this.charStyles[i] || {};
+                        this.charStyles[i] = {
+                            ...prev,
+                            color: color || prev.color
+                        };
+                    }
+                } else {
+                    // 应用到选中的字符
+                    for (const idx of this.selectedCharIndices) {
+                        const prev = this.charStyles[idx] || {};
+                        this.charStyles[idx] = {
+                            ...prev,
+                            color: color || prev.color
+                        };
+                    }
+                }
+                this.updatePreviewBox();
+            }
+            applyFontOnly() {
+                this.pushUndo();
+                const font = this.charFontSelect.value;
+                
+                if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) {
+                    // 如果没有选中字符，将字体应用到所有现有字符
+                    const text = this.previewInput.value || '';
+                    for (let i = 0; i < text.length; i++) {
+                        const prev = this.charStyles[i] || {};
+                        this.charStyles[i] = {
+                            ...prev,
+                            font: font || prev.font
+                        };
+                    }
+                } else {
+                    // 应用到选中的字符
+                    for (const idx of this.selectedCharIndices) {
+                        const prev = this.charStyles[idx] || {};
+                        this.charStyles[idx] = {
+                            ...prev,
+                            font: font || prev.font
+                        };
+                    }
                 }
                 this.updatePreviewBox();
             }
             applyCharStyle() {
                 this.pushUndo();
-                if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) return;
                 const font = this.charFontSelect.value;
                 const color = this.charColorInput.value;
                 // 百分比
                 const x = this.charPosX.value === '' ? undefined : Math.max(0, Math.min(100, parseFloat(this.charPosX.value)));
                 const y = this.charPosY.value === '' ? undefined : Math.max(0, Math.min(100, parseFloat(this.charPosY.value)));
-                for (const idx of this.selectedCharIndices) {
-                    const prev = this.charStyles[idx] || {};
-                    this.charStyles[idx] = {
-                        font: font || prev.font,
-                        color: color || prev.color,
-                        x: x !== undefined ? x : (prev.x !== undefined ? prev.x : 50),
-                        y: y !== undefined ? y : (prev.y !== undefined ? prev.y : 50),
-                        size: prev.size || 135
-                    };
+                
+                if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) {
+                    // 如果没有选中字符，将样式应用到所有现有字符
+                    const text = this.previewInput.value || '';
+                    for (let i = 0; i < text.length; i++) {
+                        const prev = this.charStyles[i] || {};
+                        this.charStyles[i] = {
+                            font: font || prev.font,
+                            color: color || prev.color,
+                            x: x !== undefined ? x : (prev.x !== undefined ? prev.x : 50),
+                            y: y !== undefined ? y : (prev.y !== undefined ? prev.y : 50),
+                            size: prev.size || 135
+                        };
+                    }
+                } else {
+                    // 应用到选中的字符
+                    for (const idx of this.selectedCharIndices) {
+                        const prev = this.charStyles[idx] || {};
+                        this.charStyles[idx] = {
+                            font: font || prev.font,
+                            color: color || prev.color,
+                            x: x !== undefined ? x : (prev.x !== undefined ? prev.x : 50),
+                            y: y !== undefined ? y : (prev.y !== undefined ? prev.y : 50),
+                            size: prev.size || 135
+                        };
+                    }
                 }
                 this.updatePreviewBox();
             }
@@ -2255,9 +2422,15 @@
                                 <div class="font-original-name" style="font-size:13px;color:rgba(0,0,0,1);font-family:Inter,sans-serif;white-space:nowrap;line-height:normal;">(${displayName})</div>
                             </div>
                         </div>
-                        <div class="font-download-area" style="position:absolute;right:0;top:0;width:73.8px;height:100%;background:rgba(248,248,248,1);display:flex;justify-content:flex-start;align-items:center;cursor:pointer;box-sizing:border-box;border-radius:0 5.4px 5.4px 0;padding:0 15.3px;" onclick="window.open('${font.url}', '_blank')">
+                        <div class="font-action-area" style="position:absolute;right:0;top:0;width:73.8px;height:100%;background:rgba(248,248,248,1);display:flex;flex-direction:column;justify-content:space-between;align-items:center;box-sizing:border-box;border-radius:0 5.4px 5.4px 0;">
                             <div class="font-separator-line" style="position:absolute;left:0;top:11.68px;width:2px;height:90px;background:#33846B;"></div>
-                            <span style="font-size:18.9px;color:rgba(0,0,0,1);font-family:Inter,sans-serif;white-space:nowrap;line-height:normal;">下载</span>
+                            <div class="font-preview-btn" style="width:100%;height:50%;display:flex;justify-content:center;align-items:center;cursor:pointer;padding:0 15.3px;box-sizing:border-box;" onclick="document.fontUploader.applyFontToSelection('${font.name}')">
+                                <span style="font-size:18.9px;color:rgba(0,0,0,1);font-family:Inter,sans-serif;white-space:nowrap;line-height:normal;">预览</span>
+                            </div>
+                            <div class="font-separator-horizontal" style="position:absolute;left:0;top:50%;width:100%;height:2px;background:#33846B;transform:translateY(-50%);"></div>
+                            <div class="font-download-btn" style="width:100%;height:50%;display:flex;justify-content:center;align-items:center;cursor:pointer;padding:0 15.3px;box-sizing:border-box;" onclick="window.open('${font.url}', '_blank')">
+                                <span style="font-size:18.9px;color:rgba(0,0,0,1);font-family:Inter,sans-serif;white-space:nowrap;line-height:normal;">下载</span>
+                            </div>
                         </div>
                         <div class="font-line" style="position:absolute;bottom:0;left:0;width:340.2px;height:2px;background:#33846B;border-radius:0px;z-index:1000;"></div>
                     </div>`;
@@ -2278,11 +2451,11 @@
                 
                 html += '</div>';
                 
-                // 添加导航箭头
-                html += '<div class="font-nav-arrow up" id="fontNavUp">▲</div>';
-                html += '<div class="font-nav-arrow down" id="fontNavDown">▼</div>';
-                
                 this.currentFonts.innerHTML = html;
+                
+                // 添加导航箭头到currentFonts容器
+                this.currentFonts.innerHTML += '<div class="font-nav-arrow up" id="fontNavUp" style="font-size: 14px;">▲</div>';
+                this.currentFonts.innerHTML += '<div class="font-nav-arrow down" id="fontNavDown" style="font-size: 14px;">▼</div>';
                 
                 // 初始化导航箭头
                 this.initFontNavigation();
@@ -2290,17 +2463,22 @@
 
             
             applyFontToSelection(fontName) {
-                // 如果没有选中字符，不执行任何操作
-                if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) {
-                    return;
-                }
-                
                 this.pushUndo();
                 
-                // 只对选中的字符应用字体
-                for (const idx of this.selectedCharIndices) {
-                    if (this.charStyles[idx]) {
-                        this.charStyles[idx].font = fontName;
+                if (!this.selectedCharIndices || this.selectedCharIndices.length === 0) {
+                    // 如果没有选中字符，将字体应用到所有现有字符
+                    const text = this.previewInput.value || '';
+                    for (let i = 0; i < text.length; i++) {
+                        if (this.charStyles[i]) {
+                            this.charStyles[i].font = fontName;
+                        }
+                    }
+                } else {
+                    // 只对选中的字符应用字体
+                    for (const idx of this.selectedCharIndices) {
+                        if (this.charStyles[idx]) {
+                            this.charStyles[idx].font = fontName;
+                        }
                     }
                 }
                 this.updatePreviewBox();
@@ -2500,18 +2678,31 @@
                     const scrollHeight = container.scrollHeight;
                     const clientHeight = container.clientHeight;
                     
+                    console.log('Scroll check:', {
+                        scrollTop: scrollTop,
+                        scrollHeight: scrollHeight,
+                        clientHeight: clientHeight,
+                        scrollTopPlusClientHeight: scrollTop + clientHeight,
+                        isAtBottom: scrollTop + clientHeight >= scrollHeight,
+                        isAtTop: scrollTop <= 0
+                    });
+                    
                     // 上箭头：在顶部时隐藏
                     if (scrollTop <= 0) {
                         upArrow.classList.add('hidden');
+                        console.log('Up arrow hidden');
                     } else {
                         upArrow.classList.remove('hidden');
+                        console.log('Up arrow shown');
                     }
                     
-                    // 下箭头：在底部时隐藏
-                    if (scrollTop + clientHeight >= scrollHeight) {
+                    // 下箭头：在底部时隐藏（添加1px的容差）
+                    if (scrollTop + clientHeight >= scrollHeight - 1) {
                         downArrow.classList.add('hidden');
+                        console.log('Down arrow hidden');
                     } else {
                         downArrow.classList.remove('hidden');
+                        console.log('Down arrow shown');
                     }
                 };
                 
@@ -2521,6 +2712,10 @@
                         top: -200,
                         behavior: 'smooth'
                     });
+                    // 滚动完成后重新检查箭头状态
+                    setTimeout(() => {
+                        updateArrowVisibility();
+                    }, 300);
                 });
                 
                 // 点击下箭头
@@ -2529,6 +2724,10 @@
                         top: 200,
                         behavior: 'smooth'
                     });
+                    // 滚动完成后重新检查箭头状态
+                    setTimeout(() => {
+                        updateArrowVisibility();
+                    }, 300);
                 });
                 
                 // 监听滚动事件
@@ -2656,6 +2855,97 @@
                 
                 this.updatePreviewBox();
                 this.renderCurrentFonts();
+            }
+            
+            // 自定义光标方法
+            createCustomCursor() {
+                console.log('创建自定义光标');
+                
+                if (this.customCursor) {
+                    this.removeCustomCursor();
+                }
+                
+                this.customCursor = document.createElement('div');
+                this.customCursor.className = 'custom-cursor';
+                this.previewInput.parentNode.style.position = 'relative';
+                this.previewInput.parentNode.appendChild(this.customCursor);
+                
+                console.log('光标元素已创建:', this.customCursor);
+                console.log('光标父元素:', this.previewInput.parentNode);
+                
+                // 延迟一帧再更新位置，确保DOM已完全渲染
+                requestAnimationFrame(() => {
+                    this.updateCustomCursor();
+                });
+            }
+            
+            removeCustomCursor() {
+                if (this.customCursor) {
+                    this.customCursor.remove();
+                    this.customCursor = null;
+                }
+            }
+            
+            updateCustomCursor() {
+                if (!this.customCursor || !this.previewInput) return;
+                
+                console.log('更新自定义光标位置');
+                
+                // 获取输入框的样式
+                const inputStyle = window.getComputedStyle(this.previewInput);
+                
+                // 创建一个临时元素来计算光标位置
+                const temp = document.createElement('span');
+                temp.style.cssText = inputStyle.cssText;
+                temp.style.position = 'absolute';
+                temp.style.visibility = 'hidden';
+                temp.style.whiteSpace = 'pre';
+                temp.style.font = inputStyle.font;
+                temp.style.padding = inputStyle.padding;
+                temp.style.border = inputStyle.border;
+                temp.style.boxSizing = inputStyle.boxSizing;
+                temp.textContent = this.previewInput.value.substring(0, this.previewInput.selectionStart);
+                
+                this.previewInput.parentNode.appendChild(temp);
+                
+                const tempRect = temp.getBoundingClientRect();
+                const inputRect = this.previewInput.getBoundingClientRect();
+                const parentRect = this.previewInput.parentNode.getBoundingClientRect();
+                
+                this.previewInput.parentNode.removeChild(temp);
+                
+                // 计算光标位置 - 相对于父容器，向左偏移12px
+                const left = tempRect.width + (inputRect.left - parentRect.left) - this.previewInput.scrollLeft - 12;
+                const top = (inputRect.top - parentRect.top) + (inputRect.height - 22) / 2;
+                
+                console.log('光标位置计算:', {
+                    tempRectWidth: tempRect.width,
+                    inputRectLeft: inputRect.left,
+                    parentRectLeft: parentRect.left,
+                    scrollLeft: this.previewInput.scrollLeft,
+                    calculatedLeft: left,
+                    calculatedTop: top,
+                    selectionStart: this.previewInput.selectionStart,
+                    inputValue: this.previewInput.value
+                });
+                
+                this.customCursor.style.left = left + 'px';
+                this.customCursor.style.top = top + 'px';
+                
+                console.log('光标样式已应用: left: ' + left + 'px; top: ' + top + 'px;');
+            }
+            
+            // 初始化隐藏的字符选择器
+            initializeHiddenCharSelector() {
+                console.log('初始化隐藏的字符选择器');
+                // 这里可以添加任何需要的初始化逻辑
+                // 目前字符选择器功能已经通过updateCharSelector方法自动更新
+            }
+            
+            // 初始化隐藏的字体选择器
+            initializeHiddenFontSelector() {
+                console.log('初始化隐藏的字体选择器');
+                // 字体选择器功能已经通过updateCharFontSelect方法自动更新
             }
         }
         document.addEventListener('DOMContentLoaded', () => {
