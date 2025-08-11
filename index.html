@@ -1072,6 +1072,7 @@
                 this.boxSelectStart = null;
                 this.boxSelectEnd = null;
                 this.loadError = false; // 初始化加载错误标志
+                this.isFirstPageLoad = true; // 标记是否是第一次进入页面
                 this.initializeEventListeners();
                 this.updatePreviewBox();
                 this.updateCharFontSelect();
@@ -1135,6 +1136,8 @@
                             // 将光标位置设置到文本末尾（最右边的字母后面）
                             this.previewInput.setSelectionRange(this.previewInput.value.length, this.previewInput.value.length);
                             this.createCustomCursor();
+                            // 标记第一次页面加载完成
+                            this.isFirstPageLoad = true;
                         }, 100);
                     });
                 });
@@ -1171,11 +1174,29 @@
                 });
                 
                 this.previewInput.addEventListener('blur', () => {
+                    // 如果是第一次进入页面，则不移除光标
+                    if (this.isFirstPageLoad) {
+                        return;
+                    }
+                    // 否则正常移除光标
                     this.removeCustomCursor();
                 });
                 
                 this.previewInput.addEventListener('click', () => {
                     this.updateCustomCursor();
+                    // 标记已经点击过输入框，不再是第一次进入页面
+                    if (this.isFirstPageLoad) {
+                        this.isFirstPageLoad = false;
+                    }
+                });
+                
+                // 添加点击其他区域的事件监听器
+                document.addEventListener('click', (e) => {
+                    // 第一次进入页面时，点击其他地方不会让光标消失
+                    // 只有在点击过输入框后，点击其他地方才会让光标消失
+                    if (e.target !== this.previewInput && !this.isFirstPageLoad) {
+                        this.removeCustomCursor();
+                    }
                 });
                 
                 this.previewInput.addEventListener('keydown', () => {
